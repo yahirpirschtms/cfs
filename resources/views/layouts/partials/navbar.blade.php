@@ -19,7 +19,7 @@
                 <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
                   <!--Trailer Status-->
                   <li class="nav-item ">
-                    <a class="nav-link mx-lg-2 text-light" aria-current="page" href="">Empty Trailer</a>
+                    <a class="nav-link mx-lg-2 text-light" aria-current="page" href=""></a>
                   </li>
 
                 </ul>

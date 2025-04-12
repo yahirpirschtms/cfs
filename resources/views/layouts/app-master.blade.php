@@ -225,7 +225,7 @@
     width: 100%;
     overflow-y: auto; /* Habilita el scroll vertical */
     overflow-x: auto; /* Habilita el desplazamiento horizontal */
-    max-height: 420px; /* Define un alto máximo para habilitar el scroll vertical */
+    max-height: 520px; /* Define un alto máximo para habilitar el scroll vertical */
   }
 
   table {
@@ -234,9 +234,9 @@
   }
 
   td {
-    padding: 10px;
+    padding: 15px !important;
     text-align: left;
-    border: none;
+    /*border: none;*/
   }
 
   th {
@@ -289,7 +289,7 @@
     transition: opacity 0.4s ease;
 }
 .centered-form {
-    max-width: 750px; /* Limita el ancho máximo a 600px */
+    max-width: 1050px; /* Limita el ancho máximo a 600px */
     margin: 0 auto; /* Centra el formulario horizontalmente */
     padding: 20px; /* Añade un poco de espacio interno */
 }
@@ -356,6 +356,32 @@
 .select2-container {
     width: 100% !important; 
 }
+.select2newcfs + .select2-container .select2-selection {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+.list-group-item{
+  border-left: unset;
+  border-right: unset;
+}
+
+.list-group-item:first-child {
+    border-top-left-radius: unset;
+    border-top-right-radius: unset;
+    border-top:unset;
+}
+.list-group-item:last-child {
+    border-bottom-left-radius: unset;
+    border-bottom-right-radius: unset;
+    border-bottom:unset;
+}
+.acordionsmaster.accordion-button:not(.collapsed) {
+    color: inherit !important; /* Heredar color de texto */
+    background-color: transparent !important; /* Fondo transparente */
+    box-shadow: none !important; /* Eliminar sombra */
+    --bs-accordion-active-bg: transparent !important; /* Sobrescribir la variable de fondo */
+}
+
 
     </style>
 </head>

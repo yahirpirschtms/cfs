@@ -6,14 +6,36 @@ import "flatpickr/dist/flatpickr.min.css"; // Importar los estilos de Flatpickr
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Swal from 'sweetalert2';
 
+window.Swal = Swal;
 window.bootstrap = bootstrap;
 window.Popper = Popper;
 window.flatpickr = flatpickr;
 
 document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
+    var modals = document.querySelectorAll('.modal');
+
+    // Inicializa tooltips en toda la página
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Aplica la función a cada modal
+    modals.forEach(function (modal) {
+        modal.addEventListener('hidden.bs.modal', function () {
+            // Ocultar y eliminar tooltips al cerrar el modal
+            tooltipList.forEach(function (tooltip) {
+                tooltip.hide();
+                tooltip.dispose();
+            });
+
+            // Reactivar tooltips después de cerrar el modal
+            setTimeout(function () {
+                tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }, 300); // Espera 300ms antes de reinicializar
+        });
     });
 
     // Formatos de fecha y hora con Flatpickr
@@ -36,6 +58,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 instance.setDate(new Date(), true);
             }
         },
+        // Evento que se ejecuta al cambiar la fecha en el input "Arrival Date"
+        onChange: function (selectedDates, dateStr, instance) {
+            let arrivalInput = document.getElementById("inputnewmastercfsarrivaldate");
+            let lfdInput = document.getElementById("inputnewmastercfslfd");
+
+            if (lfdInput && instance.input === arrivalInput) {
+                let newDate = new Date(selectedDates[0]); // Obtiene la fecha seleccionada
+                newDate.setDate(newDate.getDate() + 8); // Agrega 8 días
+                newDate.setHours(23, 59, 59); // Establece la hora en 23:59:59
+
+                // Establece la nueva fecha en el segundo input
+                lfdInput._flatpickr.setDate(newDate, true);
+            }
+        }
     });
 });
 
