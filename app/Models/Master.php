@@ -27,6 +27,17 @@ class Master extends Model
         'transaction_date' => 'datetime',
     ];
 
+    //Funcion calcular pallets y pieces automaticamente
+    public function recalculateTotals()
+    {
+        $totals = $this->subprojects()->where('status', 1)->selectRaw('SUM(pieces) as total_pieces, SUM(pallets) as total_pallets')->first();
+
+        $this->total_pieces = $totals->total_pieces ?? 0;
+        $this->total_pallets = $totals->total_pallets ?? 0;
+        $this->save();
+    }
+
+
     public function getEtaPortAttribute($value)
     {
         return $value ? Carbon::parse($value)->format('m/d/Y H:i:s') : null;

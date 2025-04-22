@@ -16,18 +16,17 @@ class CFSboardController extends Controller
     //Entrar al CFS Board project list
     public function cfsboard(){
         if (Auth::check()) {
-            // Obtener proyectos con las relaciones necesarias (Masters, Subprojects, Costumers, Partnumbers)
+            // Obtener todos los proyectos con sus relaciones necesarias
             $projects = Project::with([
                 'masters' => function ($q) {
                     $q->where('status', '1')->with([
                         'subprojects' => function ($q) {
                             $q->where('status', '1')->with([
                                 'costumer' => function ($q) {
-                                    $q->where('status', '1')->with([
-                                        'partnumbers' => function ($q) {
-                                            $q->where('status', '1');
-                                        }
-                                    ]);
+                                    $q->where('cfs_customer.status', '1');
+                                },
+                                'pns' => function ($q) { // <- Aquí es la clave
+                                    $q->where('cfs_pn.status', '1');
                                 }
                             ]);
                         }
@@ -36,8 +35,8 @@ class CFSboardController extends Controller
                 'drayageUserRelation',
                 'drayageFileRelation',
             ])
-            ->where('status', '1') // status del proyecto
-            ->get();            
+            ->where('status', '1')
+            ->get();        
 
             return view('home.cfsboard', compact('projects'));  // Pasamos los proyectos a la vista
         }

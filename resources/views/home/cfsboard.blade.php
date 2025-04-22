@@ -8,6 +8,7 @@
     <script>
         window.projectsData = @json($projects);
         window.mastersData = [];
+        window.subprojectsData = [];
     </script>
 
         <div class="container  my-4">
@@ -262,6 +263,7 @@
                                     <th scope="col">Drayage File</th>
                                     <th scope="col">Master</th>
                                     <th scope="col">Subproject</th>
+                                    <th scope="col">Release Subproject</th>
                                     <th scope="col">Pallets</th>
                                     <th scope="col">Pieces</th>
                                     <th scope="col">Options</th>
@@ -378,58 +380,6 @@
                         </table>
                     </div>
 
-                    <!--Acordiones para la visualización de los projects-->
-                    <!--
-                    <div class="accordion" id="accordioncfsprojects">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-accordioncfsprojects" aria-expanded="true" aria-controls="panelsStayOpen-accordioncfsprojects">
-                                <div class="d-flex w-100">
-                                    <div class="p-2 flex-grow-1" id="project_id_projectshow">DHW-384957</div>
-                                </div>
-                            </button>
-                            </h2>
-                            <div id="panelsStayOpen-accordioncfsprojects" class="accordion-collapse collapse">
-                                <div class="accordion-body">
-                                    <div class="container">
-                                        <div class="row">
-                                            <div class="col-12 col-xl-3 col-md-3 col-lg-3 col-sm-6 mb-4 text-nowrap">
-                                                <div><i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> <span id="invoice_projectshow" style="font-weight:500">Invoived</span></div>
-                                            </div>
-                                            <div class="col-12 col-xl-3 col-md-3 col-lg-3 col-sm-6 mb-4 text-nowrap">
-                                                <div>Month: <span id="month_projectshow" style="font-weight:500">04/02/2025</span></div>
-                                            </div>
-                                            <div class="col-12 col-xl-3 col-md-3 col-lg-3 col-sm-6 mb-4 text-nowrap">
-                                                <div>Drayage: <span id="drayage_user_projectshow" style="font-weight:500">Ramin</span><span> (</span><span id="drayage_typefile_projectshow" style="font-weight:500">PTT</span><span>)</span></div>
-                                            </div>
-                                            <div class="col-12 col-xl-3 col-md-3 col-lg-3 col-sm-6 mb-4 text-nowrap">
-                                                <div class="fw-bold">Subproyects <span id="drayage_typefile_projectshow" style="font-weight:500"><span class="badge text-white bg-success" id="subprojectsinvoiced_projectshow" data-bs-placement="top" title="Houses Invoiced">6</span><span id="subprojectsnotinvoiced_projectshow" class="badge text-bg-danger ms-2" data-bs-placement="top" title="Houses not invoiced">4</span></span></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-items-center" style="font-weight:500">
-                                        <div class=" ms-auto p-2">
-                                            <button type="button" style="color: white;" class="btn btn-sm btn-warning" id="openmodaleditcfsproject" data-url="" data-bs-placement="top" title="Edit" data-bs-toggle="modal" data-bs-target="#neweditcfsproject">
-                                                <i class="fa-solid fa-pen"></i>
-                                            </button>
-                                        </div>
-                                        <div class="p-2">
-                                            <button type="button" style="color: white;" class="btn btn-sm btn-danger" id="deletenewcfsproject" data-url="" data-bs-placement="top" title="Delete" >
-                                                <i class="fa-solid fa-trash-can"></i>
-                                            </button>
-                                        </div>
-                                        <div class="p-2">
-                                            <button type="button" style="color: white;" style="color: white;" class="btn btn-sm btn-primary" data-url="" id=""  data-bs-placement="top" title="Go to Masters" data-bs-toggle="modal" data-bs-target="#showcfsmaster">
-                                                <span class="badge text-bg-danger">4</span> Masters  <i class="fa-solid fa-diagram-successor"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    -->
-
                     <!-- Modal visualización de los masters-->
                     <div class="modal fade" id="showcfsmaster" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticshowcfsmaster" aria-hidden="true">
                         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -440,30 +390,30 @@
                                 </div>
                                 <div class="modal-body mx-4">
 
-                                <div class="d-flex justify-content-end mt-4 mx-4">
-                                    <div style="position: relative; display: inline-block; width: 100%;" class="me-4">
-                                        <i 
-                                            class="fa-solid fa-magnifying-glass" 
-                                            style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: #6c757d; cursor: pointer;"
-                                            onclick="document.getElementById('searchgeneralcfsboardmasters').focus()">
-                                        </i>
-                                        <input 
-                                            class="form-control form-control-sm" 
-                                            type="search" 
-                                            placeholder="Search" 
-                                            name="searchgeneralcfsboardmasters" 
-                                            id="searchgeneralcfsboardmasters" 
-                                            aria-label="Search" 
-                                            style="padding-left: 30px;">
+                                    <div class="d-flex justify-content-end mt-4 mx-4">
+                                        <div style="position: relative; display: inline-block; width: 100%;" class="me-4">
+                                            <i 
+                                                class="fa-solid fa-magnifying-glass" 
+                                                style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: #6c757d; cursor: pointer;"
+                                                onclick="document.getElementById('searchgeneralcfsboardmasters').focus()">
+                                            </i>
+                                            <input 
+                                                class="form-control form-control-sm" 
+                                                type="search" 
+                                                placeholder="Search" 
+                                                name="searchgeneralcfsboardmasters" 
+                                                id="searchgeneralcfsboardmasters" 
+                                                aria-label="Search" 
+                                                style="padding-left: 30px;">
+                                        </div>
+                                        
+                                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success" id="addnewcfsmaster" data-bs-toggle="modal" data-bs-placement="top" title="Add master" data-bs-target="#newcfsmaster">
+                                                <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                        
                                     </div>
-                                    
-                                    <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success" id="addnewcfsmaster" data-bs-toggle="modal" data-bs-placement="top" title="Add master" data-bs-target="#newcfsmaster">
-                                            <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                    
-                                </div>
                                 
-                                <div class="container my-5 table_style">
+                                    <div class="container my-5 table_style">
                                         <table id="MastersTable" class="table table-sm ">
                                             <thead>
                                                 <tr>
@@ -475,8 +425,9 @@
                                                     <th scope="col">ETA Port</th>
                                                     <th scope="col">Arrival Date</th>
                                                     <th scope="col">LDF</th>
-                                                    <th scope="col">Notes</th>
                                                     <th scope="col">Subproject</th>
+                                                    <th scope="col">Release Subproject</th>
+                                                    <th scope="col">Notes</th>
                                                     <th scope="col">Options</th>
                                                 </tr>
                                             </thead>
@@ -484,77 +435,6 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    
-                                    <!--<div class="accordion" id="accordioncfsmasters">
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-accordioncfsmasters1" aria-expanded="true" aria-controls="panelsStayOpen-accordioncfsmasters">
-                                                <div class="d-flex w-100">
-                                                    <div id="mbl_show" class="p-2 flex-grow-1">MEDUYH052944</div>
-                                                    <div id="fk_project_id_show" class="p-2 ms-auto"><i class="fa-solid fa-diagram-predecessor" style="color:rgb(13, 82, 200)"></i> DHW-384957</div>
-                                                </div>
-                                            </button>
-                                            </h2>
-                                            <div id="panelsStayOpen-accordioncfsmasters1" class="accordion-collapse collapse">
-                                                <div class="accordion-body">
-                                                    <div class="container">
-                                                        <div class="row">
-                                                            <div class="col-12 col-xl-3 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div>Container: <span id="container_number_show" style="font-weight:500">MEDU4641469</span></div>
-                                                            </div>
-                                                            <div class="col-6 col-xl-2 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div>Total Pallets: <span id="total_pallets_show" style="font-weight:500">45</span></div>
-                                                            </div> 
-                                                            <div class="col-6 col-xl-2 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div>Total Pieces: <span id="total_pieces_show" style="font-weight:500">95</span></div>
-                                                            </div>
-                                                            <div class="col-6 col-xl-2 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div class="">ETA Port: <span id="eta_port_show" style="font-weight:500">04/01/2025</span></div>
-                                                            </div>
-                                                            <div class="col-6 col-xl-3 col-md-6 col-lg-4 mb-4 text-nowrap ">
-                                                                <div class="">Arrival Date: <span id="arrival_date_show" style="font-weight:500">13/04/2025</span></div>
-                                                            </div>
-                                                            <div class="col-6 col-xl-2 col-md-6 col-lg-4 mb-4 text-nowrap ">
-                                                                <div class="">LFD: <span id="lfd_show" style="font-weight:500">23/04/2025</span></div>
-                                                            </div>
-                                                            <div class="col-12 col-xl-10 mb-4">
-                                                                <div class="text-nowrap fw-bold" style="  text-align: justify; display: block;">Note: <span id="notes_show" class="text-black" style="font-weight:400;">Este master aun no esta facturado completamente</span></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="d-flex align-items-center mx-2" style="font-weight:500">
-                                                        <div class="ms-auto p-2">
-                                                            <button type="button" style="color: white;" class="btn btn-sm btn-warning" id="addnewcfsmaster" data-url="" data-bs-placement="top" title="Edit Master" data-bs-toggle="modal" data-bs-target="#newcfsmaster">
-                                                                <i class="fa-solid fa-pen"></i>
-                                                            </button>
-                                                        </div>
-                                                        <div class="p-2">
-                                                            <button type="button" style="color: white;" class="btn btn-sm btn-danger" id="deletenewcfsmaster" data-url="" data-bs-placement="top" title="Delete Master" >
-                                                                <i class="fa-solid fa-trash-can"></i>
-                                                            </button>
-                                                        </div>
-                                                        <div class="p-2">
-                                                            <button type="button" style="color: white;" class="btn btn-sm btn-primary" id="cfssubproject" data-url="" data-bs-placement="top" title="Go to Subprojects" data-bs-toggle="modal" data-bs-target="#showcfssubproject">
-                                                                Subprojects <i class="fa-solid fa-diagram-successor"></i>
-                                                            </button>
-                                                        </div>   
-                                                    </div>
-                                                    <div class="collapse" id="collapseExamplemaster">
-                                                        <div class="card card-body">
-                                                            <ul class="list-group list-group-flush">
-                                                                <li class="list-group-item">An item</li>
-                                                                <li class="list-group-item">A second item</li>
-                                                                <li class="list-group-item">A third item</li>
-                                                                <li class="list-group-item">A fourth item</li>
-                                                                <li class="list-group-item">And a fifth one</li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>-->
                                 </div>
                             </div>
                         </div>
@@ -569,67 +449,67 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="createcfs" class="centered-form">
+                                    <form id="createMastercfs" class="centered-form">
                                         @csrf
                                             <div class="row gx-5">
                                                 <div class="mb-3 col-md-6 col-lg-4" style="display:none">
                                                     <label for="inputnewmastercfsproyectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
                                                     <input type="text" class="form-control" id="inputnewmastercfsproyectid" name="inputnewmastercfsproyectid">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsproyectid"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfsmbl" class="form-label text-nowrap text-capitalize" style="font-weight:500">MBL</label>
                                                     <input type="text" class="form-control" id="inputnewmastercfsmbl" name="inputnewmastercfsmbl">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsmbl"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfscontainernumber" class="form-label text-nowrap text-capitalize" style="font-weight:500">Container number</label>
                                                     <input type="text" class="form-control" id="inputnewmastercfscontainernumber" name="inputnewmastercfscontainernumber">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfscontainernumber"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <!--<div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfstotalpieces" class="form-label text-nowrap text-capitalize" style="font-weight:500">Total Pieces</label>
                                                     <input type="number" min="0" class="form-control" id="inputnewmastercfstotalpieces" name="inputnewmastercfstotalpieces">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfstotalpieces"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfstotalpallets" class="form-label text-nowrap text-capitalize" style="font-weight:500">Total Pieces</label>
                                                     <input type="number" min="0" class="form-control" id="inputnewmastercfstotalpallets" name="inputnewmastercfstotalpallets">
-                                                    <div class="invalid-feedback"></div>
-                                                </div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfstotalpallets"></div>
+                                                </div>-->
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfsetaport" class="form-label text-nowrap text-capitalize" style="font-weight:500">ETA Port</label>
                                                     <input type="text" class="form-control datetimepicker" id="inputnewmastercfsetaport" name="inputnewmastercfsetaport" placeholder="MM/DD/YYYY  HH:MM:SS">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsetaport"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfsarrivaldate" class="form-label text-nowrap text-capitalize" style="font-weight:500">Arrival Date</label>
                                                     <input type="text" class="form-control datetimepicker" id="inputnewmastercfsarrivaldate" name="inputnewmastercfsarrivaldate" placeholder="MM/DD/YYYY  HH:MM:SS">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsarrivaldate"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfslfd" class="form-label text-nowrap text-capitalize" style="font-weight:500">LFD</label>
                                                     <input type="text" class="form-control datetimepicker" id="inputnewmastercfslfd" name="inputnewmastercfslfd" placeholder="MM/DD/YYYY  HH:MM:SS">
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfslfd"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
                                                     <label for="inputnewmastercfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewmastercfsnotes" name="inputnewmastercfsnotes"></textarea>
-                                                    <div class="invalid-feedback"></div>
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsnotes"></div>
                                                 </div>
                                             </div>
                                     </form>
                                 </div>
                                 <div class="modal-footer mx-4 mb-4" style="border-top:none">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#showcfsmaster">Cancel</button>
+                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#showcfsmaster" id="cancelAndOpenMasters">Cancel</button>
                                     <button type="button" class="btn btn-primary" id="savecfsmaster">Save</button>
                                 </div>
                             </div>
@@ -641,51 +521,63 @@
                         <div class="modal-dialog modal-xl modal-dialog-centered">
                             <div class="modal-content border border-3" style="--bs-border-opacity: .5;">
                                 <div class="modal-header mx-4" style="border-bottom:none">
-                                    <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticshowcfssubproject">Subprojects List</h1>
-                                    <button type="button" style="color: white;" class="btn btn-success mt-4 ms-4" id="addnewcfsmaster" data-url="" data-bs-toggle="modal" data-bs-placement="top" title="Add subproject" data-bs-target="#newcfssubproject">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>            
+                                    <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticshowcfssubproject">Subprojects List</h1>         
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="accordion" id="accordioncfssubprojects">
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-accordioncfssubproject" aria-expanded="true" aria-controls="panelsStayOpen-accordioncfssubproject">
-                                                <div class="d-flex w-100">
-                                                    <div id="mbl_show" class="p-2 flex-grow-1">SVIVTNKG25010260</div>
-                                                    <div id="fk_project_id_show" class="p-2 ms-auto"><i class="fa-solid fa-diagram-predecessor" style="color:rgb(13, 82, 200)"></i> DHW-384957</div>
-                                                </div>
-                                            </button>
-                                            </h2>
-                                            <div id="panelsStayOpen-accordioncfssubproject" class="accordion-collapse collapse">
-                                                <div class="accordion-body">
-                                                    <div class="container">
-                                                        <div class="row">
-                                                            <div class="col-12 col-xl-3 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div>Container: <span id="container_number_show" style="font-weight:500">MEDU4641469</span></div>
-                                                            </div>
-                                                            <div class="col-6 col-xl-2 col-md-6 col-lg-4 mb-4 text-nowrap">
-                                                                <div>Total Pallets: <span id="total_pallets_show" style="font-weight:500">45</span></div>
-                                                            </div> 
-                                                        </div>
-                                                    </div>
+                                <div class="modal-body mx-4">
 
-                                                    <div class="d-flex align-items-center mx-2" style="font-weight:500">
-                                                        <div class="ms-auto p-2">
-                                                            <button type="button" style="color: white;" class="btn btn-sm btn-warning" id="addnewcfsmaster" data-url="" data-bs-placement="top" title="Edit Master" data-bs-toggle="modal" data-bs-target="#newcfsmaster">
-                                                                <i class="fa-solid fa-pen"></i>
-                                                            </button>
-                                                        </div>
-                                                        <div class="p-2">
-                                                            <button type="button" style="color: white;" class="btn btn-sm btn-danger" id="deletenewcfsmaster" data-url="" data-bs-placement="top" title="Delete Master" >
-                                                                <i class="fa-solid fa-trash-can"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    <div class="d-flex justify-content-end mt-4 mx-4">
+                                        <div style="position: relative; display: inline-block; width: 100%;" class="me-4">
+                                            <i 
+                                                class="fa-solid fa-magnifying-glass" 
+                                                style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: #6c757d; cursor: pointer;"
+                                                onclick="document.getElementById('searchgeneralcfsboardsubprojects').focus()">
+                                            </i>
+                                            <input 
+                                                class="form-control form-control-sm" 
+                                                type="search" 
+                                                placeholder="Search" 
+                                                name="searchgeneralcfsboardsubprojects" 
+                                                id="searchgeneralcfsboardsubprojects" 
+                                                aria-label="Search" 
+                                                style="padding-left: 30px;">
                                         </div>
+                                        
+                                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success skip-master-on-close" id="addnewcfssubproject" data-bs-toggle="modal" data-bs-placement="top" title="Add subproject" data-bs-target="#newcfssubproject">
+                                                <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="container my-5 table_style">
+                                        <table id="SubprojectsTable" class="table table-sm ">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">HBL</th>
+                                                    <th scope="col">Pieces</th>
+                                                    <th scope="col">Pallets</th>
+                                                    <th scope="col">Works Palletized</th>
+                                                    <th scope="col">Pallets Exchanged</th>
+                                                    <th scope="col">Customer</th>
+                                                    <th scope="col">Part Numbers</th>
+                                                    <th scope="col">cfs_checkbox</th>
+                                                    <th scope="col">cfs_comment</th>
+                                                    <th scope="col">Arrival Date</th>
+                                                    <th scope="col">WHR ID</th>
+                                                    <th scope="col">LFD</th>
+                                                    <th scope="col">customs_release_checkbox</th>
+                                                    <th scope="col">customs_release_comment</th>
+                                                    <th scope="col">OUT Date CR</th>
+                                                    <th scope="col">CR ID</th>
+                                                    <th scope="col">Charges</th>
+                                                    <th scope="col">Days after LFD</th>
+                                                    <th scope="col">Cuft</th>
+                                                    <th scope="col">Notes</th>
+                                                    <th scope="col">Options</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -694,20 +586,178 @@
 
                     <!-- Modal añadir nuevo subproject-->
                     <div class="modal fade" id="newcfssubproject" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticnewcfssubproject" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
                             <div class="modal-content border border-3" style="--bs-border-opacity: .5;">
                                 <div class="modal-header mx-4" style="border-bottom:none">
                                     <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticnewcfssubproject">New Subproject</h1>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="createcfs" class="centered-form">
+                                    <form id="createcfssubproject" class="centered-form">
                                         @csrf
                                             <div class="row gx-5">
                                                 <div class="mb-3 col-md-6 col-lg-4" style="display:none">
-                                                    <label for="inputnewmastercfsproyectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
-                                                    <input type="text" class="form-control" id="inputnewmastercfsproyectid" name="inputnewmastercfsproyectid">
-                                                    <div class="invalid-feedback"></div>
+                                                    <label for="inputnewsubprojectproyectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectproyectid" name="inputnewsubprojectproyectid">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectproyectid"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
+                                                    <label for="inputnewsubprojectcfsmbl" class="form-label text-nowrap text-capitalize" style="font-weight:500">MBL</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfsmbl" name="inputnewsubprojectcfsmbl">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsmbl"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfssubprojectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Subproject ID</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfssubprojectid" name="inputnewsubprojectcfssubprojectid">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfssubprojectid"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfshbl" class="form-label text-nowrap text-capitalize" style="font-weight:500">HBL</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfshbl" name="inputnewsubprojectcfshbl">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfshbl"></div>
+                                                </div>
+
+                                                <div class="mb-3 pb-2 col-md-6 col-lg-4 d-flex align-items-end justify-content-between">
+                                                    <label class="form-label mb-0 me-2" style="font-weight:500">HBL Reference</label>
+                                                    <div class="ms-auto">
+                                                        <button type="button" class="btn btn-sm btn-primary" id="addhblreference">
+                                                            <i class="fa-solid fa-plus"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-danger ms-2" id="removehblreference">
+                                                            <i class="fa-solid fa-minus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfspieces" class="form-label text-nowrap text-capitalize" style="font-weight:500">Pieces</label>
+                                                    <input type="number" min="0" class="form-control" id="inputnewsubprojectcfspieces" name="inputnewsubprojectcfspieces">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspieces"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfspallets" class="form-label text-nowrap text-capitalize" style="font-weight:500">Pallets</label>
+                                                    <input type="number" min="0" class="form-control" id="inputnewsubprojectcfspallets" name="inputnewsubprojectcfspallets">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspallets"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfsworkspalletized" class="form-label" style="font-weight:500">Works/Palletized</label>
+                                                    <select class="form-select" id="inputnewsubprojectcfsworkspalletized" name="inputnewsubprojectcfsworkspalletized">
+                                                        <option selected disabled hidden></option>    
+                                                    </select>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsworkspalletized"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfspalletsexchanged" class="form-label" style="font-weight:500">Pallets Exchanged</label>
+                                                    <select class="form-select" id="inputnewsubprojectcfspalletsexchanged" name="inputnewsubprojectcfspalletsexchanged">
+                                                        <option selected disabled hidden></option>    
+                                                    </select>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspalletsexchanged"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfscustomer" class="form-label" style="font-weight:500">Customer</label>
+                                                    <select class="form-select searchCustomer" id="inputnewsubprojectcfscustomer" name="inputnewsubprojectcfscustomer" data-error-message="Customer is required.">
+                                                        <option selected disabled hidden></option>    
+                                                    </select>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscustomer"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfscfscheckbox" class="form-label">CFS</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-text">
+                                                            <input class="form-check-input mt-0" type="checkbox" id="inputnewsubprojectcfscfscheckbox" name="inputnewsubprojectcfscfscheckbox" value="" aria-label="Checkbox for following text input">
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <select class="form- select2newcfs searchcfscomment" id="inputnewsubprojectcfscfscomment" name="inputnewsubprojectcfscfscomment" data-error-message="CFS comment is required.">
+                                                                <option selected disabled hidden></option>  
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscfscomment"></div>
+                                                </div>
+
+                                                <div class="mb-3 pb-2 col-md-6 col-lg-4 d-flex align-items-end justify-content-between">
+                                                    <label class="form-label mb-0 me-2" style="font-weight:500">Part N.</label>
+                                                    <div class="ms-auto">
+                                                        <button type="button" class="btn btn-sm btn-primary" id="addpartnumber">
+                                                            <i class="fa-solid fa-plus"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-danger ms-2" id="removepartnumber">
+                                                            <i class="fa-solid fa-minus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
+                                                    <label for="inputnewsubprojectcfspartnumber" class="form-label"  style="font-weight:500">Part Number</label>
+                                                    <select class="form-select" id="inputnewsubprojectcfspartnumber" name="inputnewsubprojectcfspartnumber">
+                                                        <option selected disabled hidden></option>    
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfsmagayawhr" class="form-label text-nowrap text-capitalize" style="font-weight:500">WHR ID</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfsmagayawhr" name="inputnewsubprojectcfsmagayawhr">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsmagayawhr"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfscustomsreleasecheckbox" class="form-label">Customs Release</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-text">
+                                                            <input class="form-check-input mt-0" type="checkbox" id="inputnewsubprojectcfscustomsreleasecheckbox" name="inputnewsubprojectcfscustomsreleasecheckbox" value="" aria-label="Checkbox for following text input">
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <select class="form- select2newcfs searchcustomerreleasecomment" id="inputnewsubprojectcfscustomsreleasecomment" name="inputnewsubprojectcfscustomsreleasecomment" data-error-message="Custom release comment is required.">
+                                                                <option selected disabled hidden></option>  
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscustomsreleasecomment"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfsoutdatecr" class="form-label text-nowrap text-capitalize" style="font-weight:500">Out Date CR</label>
+                                                    <input type="text" class="form-control datetimepicker" id="inputnewsubprojectcfsoutdatecr" name="inputnewsubprojectcfsoutdatecr">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsoutdatecr"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfsmagayacr" class="form-label text-nowrap text-capitalize" style="font-weight:500">CR ID</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfsmagayacr" name="inputnewsubprojectcfsmagayacr">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsmagayacr"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfscharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">Charges</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfscharges" name="inputnewsubprojectcfscharges">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscharges"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfsdalfd" class="form-label text-nowrap text-capitalize" style="font-weight:500">Days After LFD</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfsdalfd" name="inputnewsubprojectcfsdalfd">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsdalfd"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                    <label for="inputnewsubprojectcfscuft" class="form-label text-nowrap text-capitalize" style="font-weight:500">Cuft</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfscuft" name="inputnewsubprojectcfscuft">
+                                                    <div class="form-text" id="basic-addon4">1 Cumt - 35.3147 Cuft</div>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscuft"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                    <label for="inputnewsubprojectcfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
+                                                    <textarea rows="1" type="text" class="form-control" id="inputnewsubprojectcfsnotes" name="inputnewsubprojectcfsnotes"></textarea>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsnotes"></div>
                                                 </div>
                                             </div>
                                     </form>
@@ -721,94 +771,12 @@
                     </div>
                 </div>
 
-                    <!--<div class="accordion" id="accordion_cfs_project">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfs_project" aria-expanded="true" aria-controls="cfs_project">
-                            <div class="container text-center">
-                                <div class="row">
-                                    <div class="col-6">
-                                    1 of 2
-                                    </div>
-                                    <div class="col">
-                                    2 of 2
-                                    </div>
-                                    <div class="col">
-                                    2 of 2
-                                    </div>
-                                </div>
-                            </div>
-                            </button>
-                            </h2>
-                            <div id="cfs_project" class="accordion-collapse collapse">
-                            <div class="accordion-body">
-                                <div class="list-group list-group-numbered">
-                                    <button type="button" class="list-group-item list-group-item-action  d-flex justify-content-between align-items-start" aria-current="true">
-                                        <div class="ms-2 me-auto">
-                                            <div class="fw-bold">Subheading</div>
-                                            Content for list item
-                                        </div>
-                                        <span class="badge text-bg-primary rounded-pill">14</span>
-                                    </button>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <form id="createcfs" class="centered-form">
+                    <!--<form id="createcfs" class="centered-form">
                         @csrf
-                        <div class="row gx-5">
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsinvoice" class="form-label">Invoice</label>
-                                <select class="form-select" id="inputnewcfsinvoice" name="inputnewcfsinvoice">
-                                    <option value="">Choose an option</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>  
-                                </select>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsmonth" class="form-label">Month</label>
-                                <input type="text" class="form-control datepicker" id="inputnewcfsmonth" name="inputnewcfsmonth" placeholder="MM/DD/YYYY">
-                                <div class="invalid-feedback"></div>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsdrayageperson" class="form-label">Drayage Person</label>
-                                <select class="form-select" id="inputnewcfsdrayageperson" name="inputnewcfsdrayageperson">
-                                    <option selected disabled hidden></option>    
-                                </select>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsdrayagefiletype" class="form-label">Drayage File Type</label>
-                                <select class="form-select" id="inputnewcfsdrayagefiletype" name="inputnewcfsdrayagefiletype">
-                                    <option selected disabled hidden></option>    
-                                </select>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsproyectid" class="form-label">Proyect ID</label>
-                                <input type="text" class="form-control" id="inputnewcfsproyectid" name="inputnewcfsproyectid">
-                                <div class="invalid-feedback"></div>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsmbl" class="form-label">MBL</label>
-                                <input type="text" class="form-control" id="inputnewcfsmbl" name="inputnewcfsmbl">
-                                <div class="invalid-feedback"></div>
-                            </div>
 
                             <div class="mb-3 col-md-6">
                                 <label for="inputnewcfscontainernumber" class="form-label">Container Number</label>
                                 <input type="text" class="form-control" id="inputnewcfscontainernumber" name="inputnewcfscontainernumber">
-                                <div class="invalid-feedback"></div>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfstotalpieces" class="form-label">Total Pieces</label>
-                                <input type="number" min="0" class="form-control" id="inputnewcfstotalpieces" name="inputnewcfstotalpieces">
                                 <div class="invalid-feedback"></div>
                             </div>
 
@@ -858,6 +826,13 @@
 
                                     <div class="mb-3 col-md-6 col-lg-4">
                                         <label for="inputnewcfscustomer" class="form-label">Customer</label>
+                                        <select class="form-select" id="inputnewcfscustomer" name="inputnewcfscustomer">
+                                            <option selected disabled hidden></option>    
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3 col-md-6 col-lg-4">
+                                        <label for="inputnewcfscustomer" class="form-label">Customs Release</label>
                                         <select class="form-select" id="inputnewcfscustomer" name="inputnewcfscustomer">
                                             <option selected disabled hidden></option>    
                                         </select>

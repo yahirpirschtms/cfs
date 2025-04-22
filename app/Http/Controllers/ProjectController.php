@@ -6,6 +6,7 @@ use App\Models\Master;
 use App\Models\Subproject;
 use App\Models\Costumer;
 use App\Models\Partnumber;
+use App\Models\Pn;
 use Carbon\Carbon;
 use App\Models\Project;
 use Illuminate\Support\Facades\Auth;
@@ -54,11 +55,10 @@ class ProjectController extends Controller
                         'subprojects' => function ($q) {
                             $q->where('status', '1')->with([
                                 'costumer' => function ($q) {
-                                    $q->where('status', '1')->with([
-                                        'partnumbers' => function ($q) {
-                                            $q->where('status', '1');
-                                        }
-                                    ]);
+                                    $q->where('cfs_customer.status', '1');
+                                },
+                                'pns' => function ($q) { // <- Aquí es la clave
+                                    $q->where('cfs_pn.status', '1');
                                 }
                             ]);
                         }
@@ -67,8 +67,8 @@ class ProjectController extends Controller
                 'drayageUserRelation',
                 'drayageFileRelation',
             ])
-            ->where('status', '1') // status del proyecto
-            ->get();
+            ->where('status', '1')
+            ->get();   
 
             // Responder con éxito y devolver todos los proyectos con sus relaciones
             return response()->json([
@@ -97,18 +97,17 @@ class ProjectController extends Controller
                 $project->transaction_date = now();
                 $project->save();
 
-                // Obtener los proyectos con las relaciones necesarias
+                // Obtener todos los proyectos con sus relaciones necesarias
                 $projects = Project::with([
                     'masters' => function ($q) {
                         $q->where('status', '1')->with([
                             'subprojects' => function ($q) {
                                 $q->where('status', '1')->with([
                                     'costumer' => function ($q) {
-                                        $q->where('status', '1')->with([
-                                            'partnumbers' => function ($q) {
-                                                $q->where('status', '1');
-                                            }
-                                        ]);
+                                        $q->where('cfs_customer.status', '1');
+                                    },
+                                    'pns' => function ($q) { // <- Aquí es la clave
+                                        $q->where('cfs_pn.status', '1');
                                     }
                                 ]);
                             }
@@ -117,9 +116,9 @@ class ProjectController extends Controller
                     'drayageUserRelation',
                     'drayageFileRelation',
                 ])
-                ->where('status', '1') // status del proyecto
-                ->get();
-
+                ->where('status', '1')
+                ->get();   
+                
                 // Responder con éxito y los proyectos actualizados
                 return response()->json([
                     'success' => true,
@@ -166,18 +165,17 @@ class ProjectController extends Controller
                 $project->transaction_date = now();
                 $project->save();
 
-                // Obtener los proyectos con las relaciones necesarias
+                // Obtener todos los proyectos con sus relaciones necesarias
                 $projects = Project::with([
                     'masters' => function ($q) {
                         $q->where('status', '1')->with([
                             'subprojects' => function ($q) {
                                 $q->where('status', '1')->with([
                                     'costumer' => function ($q) {
-                                        $q->where('status', '1')->with([
-                                            'partnumbers' => function ($q) {
-                                                $q->where('status', '1');
-                                            }
-                                        ]);
+                                        $q->where('cfs_customer.status', '1');
+                                    },
+                                    'pns' => function ($q) { // <- Aquí es la clave
+                                        $q->where('cfs_pn.status', '1');
                                     }
                                 ]);
                             }
@@ -186,8 +184,8 @@ class ProjectController extends Controller
                     'drayageUserRelation',
                     'drayageFileRelation',
                 ])
-                ->where('status', '1') // status del proyecto
-                ->get();
+                ->where('status', '1')
+                ->get();   
 
                 // Responder con éxito y los proyectos actualizados
                 return response()->json([

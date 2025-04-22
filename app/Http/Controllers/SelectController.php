@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericCatalogs;
+use App\Models\Costumer;
+use App\Models\Pn;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -14,13 +16,17 @@ class SelectController extends Controller
     public function getLoadSelects(Request $request){
         if (Auth::check()) {
             // Obtener los datos donde el campo gntc_group sea 'drayage_user' o 'drayage_filetype'
-            $drayageUserData = GenericCatalogs::where('gntc_group', 'drayage_user')->select('gnct_id', 'gntc_value')->get();
-            $drayageFiletypeData = GenericCatalogs::where('gntc_group', 'drayage_file')->select('gnct_id', 'gntc_value')->get();
+            $drayageUserData = GenericCatalogs::where('gntc_group', 'drayage_user')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            $drayageFiletypeData = GenericCatalogs::where('gntc_group', 'drayage_file')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            $customersData = Costumer::where('status', '1')->select('pk_customer', 'name')->get();
+            $partNumberData = Pn::where('status', '1')->select('pk_part_number', 'description')->get();
 
             // Devolver los datos en formato JSON
             return response()->json([
                 'drayage_user' => $drayageUserData,
-                'drayage_filetype' => $drayageFiletypeData
+                'drayage_filetype' => $drayageFiletypeData,
+                'customers' => $customersData,
+                'part_number' => $partNumberData,
             ]);
         }
         return redirect('/login');
@@ -94,6 +100,41 @@ class SelectController extends Controller
                 return response()->json([
                     'message' => 'Drayage File Type already exists',
                     'existingDrayageFileType' => $existingDrayageFileType
+                ], 409);
+            }
+        }
+        return redirect('/login');
+    }
+
+    //Funcion para añadir nuevos Part Numbers
+    public function saveNewPartNumber(Request $request){
+        if(Auth::check()){
+            $request->validate([
+                'newPartNumber'=>'required|string|max:255',
+            ]);
+
+            $existingPartNumber = Pn::where('description',$request->newPartNumber)
+                ->where('status','1')
+                ->first();
+            if(!$existingPartNumber){
+                $createnewPartNumber = new Pn();
+                $createnewPartNumber->description = $request->newPartNumber;
+                $createnewPartNumber->status = 1;
+                $createnewPartNumber->created_date =  now();
+                $createnewPartNumber->created_by = Auth::check() ? Auth::user()->username : 'system';
+                $createnewPartNumber->save();
+
+                return response()->json([
+                    'message' => 'New part number saved succesfully.',
+                    'newPartNumberCreated' => [
+                        'pk_part_number' => $createnewPartNumber->pk_part_number,
+                        'description' => $createnewPartNumber->description
+                    ]
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Part Number already exists',
+                    'existingPartNumber' => $existingPartNumber
                 ], 409);
             }
         }

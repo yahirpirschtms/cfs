@@ -8,6 +8,7 @@ use App\Http\Controllers\CFSclientController;
 use App\Http\Controllers\SelectController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\MasterController;
+use App\Http\Controllers\SubprojectController;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -49,4 +50,19 @@ Route::middleware('auth')->group(function () {
 
     //Ruta para obtener los masters de un Project
     Route::post('/getProjectMasters', [MasterController::class, 'getProjectMasters'])->name('getProjectMasters');
+
+    //Ruta para añadir un nuevo Master
+    Route::post('/saveNewMaster', [MasterController::class, 'saveNewMaster'])->name('saveNewMaster');
+
+    //Ruta para añadir un nuevo Master
+    Route::post('/editNewMaster', [MasterController::class, 'editNewMaster'])->name('editNewMaster');
+
+    //Ruta para borrar el master
+    Route::post('/deleteMaster', [MasterController::class, 'deleteMaster'])->name('deleteMaster');
+
+    //Ruta para obtener los subprojetcs de un Master
+    Route::post('/getMastersSubprojects', [SubprojectController::class, 'getMastersSubprojects'])->name('getMastersSubprojects');
+
+    //Ruta para añadir un nuevo PartNumber
+    Route::post('/saveNewPartNumber', [SelectController::class, 'saveNewPartNumber'])->name('saveNewPartNumber');
 });

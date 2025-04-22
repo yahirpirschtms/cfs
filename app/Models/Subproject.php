@@ -25,12 +25,12 @@ class Subproject extends Model
         'cfs_checkbox',
         'cfs_comment',
         'arrival_date',
-        'magaya_whr',
+        'whr',
         'lfd',
         'customs_release_checkbox',
         'customs_release_comment',
         'out_date_cr',
-        'magaya_cr',
+        'cr',
         'charges',
         'days_after_lfd',
         'cuft',
@@ -51,6 +51,19 @@ class Subproject extends Model
         'charges' => 'decimal:2',
         'cuft' => 'decimal:2',
     ];
+
+    //Llamar a la funcion para actualizar las cantidades de pallets y pieces
+    protected static function booted()
+    {
+        static::saved(function ($subproject) {
+            if ($subproject->fk_mbl) {
+                $master = $subproject->master;
+                if ($master) {
+                    $master->recalculateTotals();
+                }
+            }
+        });
+    }
 
     // Formateo de fechas tipo datetime
     public function getArrivalDateAttribute($value)
@@ -89,8 +102,15 @@ class Subproject extends Model
         return $this->belongsTo(Costumer::class, 'customer', 'pk_customer');
     }
 
-    public function partnumbers()
+    // Relación con tabla pivote (cfs_h_pn)
+    public function partnumberLinks()
     {
         return $this->hasMany(Partnumber::class, 'fk_hbl', 'hbl');
+    }
+
+    // Relación many-to-many con números de parte reales (cfs_pn)
+    public function pns()
+    {
+        return $this->belongsToMany(Pn::class, 'cfs_h_pn', 'fk_hbl', 'fk_pn', 'hbl', 'pk_part_number');
     }
 }

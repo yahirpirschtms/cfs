@@ -8,12 +8,11 @@ use Carbon\Carbon;
 class Partnumber extends Model
 {
     protected $table = 'cfs_h_pn';
-    protected $primaryKey = 'pk_part_number';
+    protected $primaryKey = 'pk_h_pn';
     public $timestamps = false;
 
     protected $fillable = [
-        'fk_hbl', 'description', 'created_by', 'status',
-        'created_date', 'updated_by', 'transaction_date'
+        'fk_hbl', 'fk_pn', 'status', 'created_by', 'created_date', 'updated_by', 'transaction_date'
     ];
 
     protected $casts = [
@@ -34,5 +33,10 @@ class Partnumber extends Model
     public function subproject()
     {
         return $this->belongsTo(Subproject::class, 'fk_hbl', 'hbl');
+    }
+
+    public function pn()
+    {
+        return $this->belongsTo(Pn::class, 'fk_pn', 'pk_part_number');
     }
 }

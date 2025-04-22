@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Aplica la función a cada modal
-    modals.forEach(function (modal) {
+    /*modals.forEach(function (modal) {
         modal.addEventListener('hidden.bs.modal', function () {
             // Ocultar y eliminar tooltips al cerrar el modal
             tooltipList.forEach(function (tooltip) {
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }, 300); // Espera 300ms antes de reinicializar
         });
-    });
+    });*/
 
     // Formatos de fecha y hora con Flatpickr
     flatpickr(".datepicker", {
@@ -58,20 +58,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 instance.setDate(new Date(), true);
             }
         },
-        // Evento que se ejecuta al cambiar la fecha en el input "Arrival Date"
         onChange: function (selectedDates, dateStr, instance) {
             let arrivalInput = document.getElementById("inputnewmastercfsarrivaldate");
             let lfdInput = document.getElementById("inputnewmastercfslfd");
-
+    
             if (lfdInput && instance.input === arrivalInput) {
-                let newDate = new Date(selectedDates[0]); // Obtiene la fecha seleccionada
-                newDate.setDate(newDate.getDate() + 8); // Agrega 8 días
-                newDate.setHours(23, 59, 59); // Establece la hora en 23:59:59
-
-                // Establece la nueva fecha en el segundo input
+                let newDate = new Date(selectedDates[0]);
+                newDate.setDate(newDate.getDate() + 8);
+                newDate.setHours(23, 59, 59);
+    
+                // Establecer la fecha sugerida
                 lfdInput._flatpickr.setDate(newDate, true);
+    
+                // Limitar la fecha mínima a +7 días desde la llegada
+                let minLfdDate = new Date(selectedDates[0]);
+                minLfdDate.setDate(minLfdDate.getDate() + 7);
+                lfdInput._flatpickr.set('minDate', minLfdDate);
             }
         }
     });
+    
 });
 
