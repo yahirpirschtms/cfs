@@ -27,6 +27,8 @@ class Master extends Model
         'transaction_date' => 'datetime',
     ];
 
+    protected $appends = ['eta_port_full', 'arrival_date_full', 'lfd_full'];
+
     //Funcion calcular pallets y pieces automaticamente
     public function recalculateTotals()
     {
@@ -37,20 +39,40 @@ class Master extends Model
         $this->save();
     }
 
-
     public function getEtaPortAttribute($value)
     {
-        return $value ? Carbon::parse($value)->format('m/d/Y H:i:s') : null;
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+
+    public function getEtaPortFullAttribute()
+    {
+        return $this->attributes['eta_port'] 
+            ? Carbon::parse($this->attributes['eta_port'])->format('m/d/Y H:i:s')
+            : null;
     }
 
     public function getArrivalDateAttribute($value)
     {
-        return $value ? Carbon::parse($value)->format('m/d/Y H:i:s') : null;
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+
+    public function getArrivalDateFullAttribute()
+    {
+        return $this->attributes['arrival_date'] 
+            ? Carbon::parse($this->attributes['arrival_date'])->format('m/d/Y H:i:s') 
+            : null;
     }
 
     public function getLfdAttribute($value)
     {
-        return $value ? Carbon::parse($value)->format('m/d/Y H:i:s') : null;
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+
+    public function getLfdFullAttribute()
+    {
+        return $this->attributes['lfd'] 
+            ? Carbon::parse($this->attributes['lfd'])->format('m/d/Y H:i:s') 
+            : null;
     }
 
     public function getCreatedDateAttribute($value)
@@ -60,7 +82,7 @@ class Master extends Model
 
     public function getTransactionDateAttribute($value)
     {
-        return Carbon::parse($value)->format('m/d/Y H:i:s');
+        return $value ? Carbon::parse($value)->format('m/d/Y H:i:s') : null;
     }
 
     public function project()

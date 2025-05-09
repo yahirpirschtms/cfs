@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class Costumer extends Model
+class HblReferences extends Model
 {
-    protected $table = 'cfs_customer';
-    protected $primaryKey = 'pk_customer';
+    protected $table = 'cfs_hbl_references';
+    protected $primaryKey = 'pk_hbl_reference';
     public $timestamps = false;
 
     protected $fillable = [
-        'description', 'address', 'city', 'state', 'country', 'zipcode', 'status',
+        'description', 'fk_hbl', 'status',
         'created_by', 'created_date', 'updated_by', 'transaction_date'
     ];
 
@@ -33,6 +33,6 @@ class Costumer extends Model
 
     public function subprojects()
     {
-        return $this->hasMany(Subproject::class, 'customer', 'pk_customer');
+        return $this->belongsTo(Subproject::class, 'fk_hbl', 'hbl');
     }
 }

@@ -11,22 +11,13 @@
         window.subprojectsData = [];
     </script>
 
-        <div class="container  my-4">
+        <div class="my-4">
             @if(in_array('add_new', Auth::user()->permissions))
 
-                <div id="head_buttons_newcfsboard" class="container  mt-4 " style=" background-color:white; position:fixed; left:0; right:0; top:80px; padding:10px; padding-bottom:0; z-index:10;" >
+                <div id="head_buttons_newcfsboard" class="mx-4 mt-4 " style=" background-color:white; position:fixed; left:0; right:0; top:80px; padding:10px; padding-bottom:0; z-index:10;" >
                     <div class="my-4 d-flex justify-content-center align-items-center">
                         <h2 class="gradient-text text-capitalize fw-bolder" style="">CFS Board</h2>
                     </div>
-
-                    <!--<div class="d-flex mx-2">
-                        <div class="p-2 flex-grow-1 align-self-center"><h4 class="text-capitalize fw-bold">Projects List</h4></div>
-                        <div class="p-2">
-                            <button type="button" style="color: white;" class="btn btn-success" id="openmodalnewcfsproject" data-url="" data-bs-toggle="modal" data-bs-placement="top" title="Add project" data-bs-target="#neweditcfsproject">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>-->
 
                     <!--Botones Añadir y refresh-->
                     <div class="d-flex justify-content-end mt-4 mx-4 mb-2">
@@ -52,7 +43,7 @@
                         <!--<button type="button" style="color: white;" class="btn me-2 btn-primary" id="refreshemptytrailertable" data-url="" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Refresh Data">
                             <i class="fa-solid fa-arrows-rotate"></i>
                         </button>-->
-                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success" id="openmodalnewcfsproject" data-url="" data-bs-toggle="modal" data-bs-placement="top" title="Add project" data-bs-target="#neweditcfsproject">
+                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success" id="openmodalnewcfsproject" data-url="" data-bs-placement="top" title="Add project">
                                 <i class="fa-solid fa-plus"></i>
                         </button>
                         
@@ -191,7 +182,7 @@
                 </div>
                 
                 <!--Contenido General Pagina-->
-                <div class="container  mb-4" style="margin-top: 290px;">
+                <div class="px-2 mb-4" style="margin-top: 290px;">
                     <!-- Modal para añadir nuevos cfs projects-->
                     <div class="modal fade" id="neweditcfsproject" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticnewcfsproject" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
@@ -210,14 +201,13 @@
                                                     <div class="invalid-feedback" id="error-inputnewcfsprojectprojectid"></div>
                                                 </div>
 
-                                                <!--<div class="mb-3 col-md-6">
+                                                <div class="mb-3 col-md-6">
                                                     <label for="inputnewcfsprojectinvoice" class="form-label text-nowrap text-capitalize" style="font-weight:500">Invoice</label>
-                                                    <select class="form-select" id="inputnewcfsprojectinvoice" name="inputnewcfsprojectinvoice">
-                                                        <option value="">Choose an option</option>
-                                                        <option value="yes">Yes</option>
-                                                        <option value="no">No</option>  
+                                                    <select class="form-select searchInvoice" id="inputnewcfsprojectinvoice" name="inputnewcfsprojectinvoice" data-error-message="Invoice is required.">
+                                                        <option selected disabled hidden></option>    
                                                     </select>
-                                                </div>-->
+                                                    <div class="invalid-feedback" id="error-inputnewcfsprojectinvoice"></div>
+                                                </div>
 
                                                 <div class="mb-3 col-md-6">
                                                     <label for="inputnewcfsprojectmonth" class="form-label text-nowrap text-capitalize" style="font-weight:500">Month</label>
@@ -250,136 +240,33 @@
                             </div>
                         </div>
                     </div>   
-
                     <!--Tabla para mostrar los proyectos existentes-->
-                    <div class="container my-5 table_style">
+                    <div class="my-5 table_style">
                         <table id="projectsTable" class="table table-sm ">
                             <thead>
                                 <tr>
                                     <th scope="col">Project ID</th>
                                     <th scope="col">Invoice</th>
                                     <th scope="col">Month</th>
-                                    <th scope="col">Drayage User</th>
-                                    <th scope="col">Drayage File</th>
-                                    <th scope="col">Master</th>
-                                    <th scope="col">Subproject</th>
-                                    <th scope="col">Release Subproject</th>
-                                    <th scope="col">Pallets</th>
+                                    <th scope="col">User</th>
+                                    <th scope="col">File</th>
+                                    <th scope="col">Options</th>
+                                    <th scope="col">MBL</th>
+                                    <th scope="col">Container</th>
                                     <th scope="col">Pieces</th>
+                                    <th scope="col">Pallets</th>
+                                    <th scope="col">ETA</th>
+                                    <th scope="col">Arrival</th>
+                                    <th scope="col">LDF</th>
+                                    <th scope="col">House</th>
                                     <th scope="col">Options</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <!--<tr>
-                                    <td style="font-weight:500">fyguvhibjn</td>
-                                    <td style="font-weight:500"><i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> Yes</td>
-                                    <td style="font-weight:500">04/15/2025</td>
-                                    <td style="font-weight:500">Ramin</td>
-                                    <td style="font-weight:500">PTT</td>
-                                    <td class="">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Totals
-                                                <span class="badge" style="background-color: darkorange;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Invoiced
-                                                <span class="badge" style="background-color: dodgerblue;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Not invoiced
-                                                <span class="badge text-bg-danger">0</span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td class="">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Totals
-                                                <span class="badge" style="background-color: mediumseagreen;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Invoiced
-                                                <span class="badge" style="background-color: dodgerblue;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Not invoiced
-                                                <span class="badge text-bg-danger">0</span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <div class=" ms-auto p-2">
-                                                <button type="button" style="color: white; color:rgb(13, 82, 200)" class="btn btn-sm" id="openmodaleditcfsproject" data-url="" data-bs-placement="top" title="Edit project" >
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </button>
-                                            </div>
-                                            <div class="p-2">
-                                                <button type="button" style="" class="btn btn-sm btn-danger" id="deletenewcfsproject" data-url="" data-bs-placement="top" title="Delete project" >
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="font-weight:500">fyguvhibjn</td>
-                                    <td style="font-weight:500"><i class="text-danger fa-solid fa-circle-xmark" style=""></i> No</td>
-                                    <td style="font-weight:500">04/15/2025</td>
-                                    <td style="font-weight:500">Ramin</td>
-                                    <td style="font-weight:500">PTT</td>
-                                    <td class="">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Totals
-                                                <span class="badge" style="background-color: darkorange;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Invoiced
-                                                <span class="badge" style="background-color: dodgerblue;">0</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Not invoiced
-                                                <span class="badge text-bg-danger">14</span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td class="">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Totals
-                                                <span class="badge" style="background-color: mediumseagreen;">14</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Invoiced
-                                                <span class="badge" style="background-color: dodgerblue;">0</span>
-                                            </li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                Not invoiced
-                                                <span class="badge text-bg-danger">14</span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <div class=" ms-auto p-2">
-                                                <button type="button" style="color: white; color:rgb(13, 82, 200)" class="btn btn-sm" id="openmodaleditcfsproject" data-url="" data-bs-placement="top" title="Edit project" data-bs-toggle="modal" data-bs-target="#neweditcfsproject">
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </button>
-                                            </div>
-                                            <div class="p-2">
-                                                <button type="button" style="color: white;" class="btn btn-sm btn-danger" id="deletenewcfsproject" data-url="" data-bs-placement="top" title="Delete project" >
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>-->
                             </tbody>
+
                         </table>
                     </div>
-
                     <!-- Modal visualización de los masters-->
                     <div class="modal fade" id="showcfsmaster" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticshowcfsmaster" aria-hidden="true">
                         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -500,7 +387,7 @@
                                                     <div class="invalid-feedback" id="error-inputnewmastercfslfd"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none;">
                                                     <label for="inputnewmastercfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewmastercfsnotes" name="inputnewmastercfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewmastercfsnotes"></div>
@@ -509,7 +396,8 @@
                                     </form>
                                 </div>
                                 <div class="modal-footer mx-4 mb-4" style="border-top:none">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#showcfsmaster" id="cancelAndOpenMasters">Cancel</button>
+                                    <!--<button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#showcfsmaster" id="cancelAndOpenMasters">Cancel</button>-->
+                                    <button type="button" class="btn btn-danger"  data-bs-dismiss="modal">Cancel</button>
                                     <button type="button" class="btn btn-primary" id="savecfsmaster">Save</button>
                                 </div>
                             </div>
@@ -518,11 +406,11 @@
 
                     <!-- Modal visualización de los subprojects-->
                     <div class="modal fade" id="showcfssubproject" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticshowcfssubproject" aria-hidden="true">
-                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-dialog modal-xxxl modal-dialog-centered">
                             <div class="modal-content border border-3" style="--bs-border-opacity: .5;">
                                 <div class="modal-header mx-4" style="border-bottom:none">
                                     <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticshowcfssubproject">Subprojects List</h1>         
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close close-staticshowcfssubproject" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body mx-4">
 
@@ -543,29 +431,63 @@
                                                 style="padding-left: 30px;">
                                         </div>
                                         
-                                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success skip-master-on-close" id="addnewcfssubproject" data-bs-toggle="modal" data-bs-placement="top" title="Add subproject" data-bs-target="#newcfssubproject">
+                                        <!--<button type="button" style="color: white;" class="btn me-2 btn-sm btn-success skip-master-on-close" id="addnewcfssubproject" data-projectid="" data-mbl="" data-bs-toggle="modal" data-bs-placement="top" title="Add subproject" data-bs-target="#newcfssubproject">-->
+                                        <button type="button" style="color: white;" class="btn me-2 btn-sm btn-success skip-master-on-close" id="addnewcfssubproject" data-projectid="" data-mbl="">
                                                 <i class="fa-solid fa-plus"></i>
                                         </button>
                                     </div>
 
-                                    <div class="container my-5 table_style">
+                                    <div class="my-5 table_style">
                                         <table id="SubprojectsTable" class="table table-sm ">
                                             <thead>
                                                 <tr>
+                                                    <th scope="col">Subproject ID</th>
                                                     <th scope="col">HBL</th>
                                                     <th scope="col">Pieces</th>
                                                     <th scope="col">Pallets</th>
-                                                    <th scope="col">Works Palletized</th>
-                                                    <th scope="col">Pallets Exchanged</th>
+                                                    <th scope="col">Works Pall.</th>
+                                                    <th scope="col">Pallets Ex.</th>
                                                     <th scope="col">Customer</th>
-                                                    <th scope="col">Part Numbers</th>
-                                                    <th scope="col">cfs_checkbox</th>
-                                                    <th scope="col">cfs_comment</th>
-                                                    <th scope="col">Arrival Date</th>
+                                                    <th scope="col">Agent</th>
+                                                    <th scope="col">Product</th>
+                                                    <th scope="col">CFS</th>
+                                                    <th scope="col">Arrival</th>
                                                     <th scope="col">WHR ID</th>
                                                     <th scope="col">LFD</th>
-                                                    <th scope="col">customs_release_checkbox</th>
-                                                    <th scope="col">customs_release_comment</th>
+                                                    <th scope="col">Custom R.</th>
+                                                    <th scope="col">OUT Date CR</th>
+                                                    <th scope="col">CR ID</th>
+                                                    <th scope="col">Charges</th>
+                                                    <th scope="col" class="text-wrap">Days after LFD</th>
+                                                    <th scope="col">Cuft</th>
+                                                    <th scope="col">Notes</th>
+                                                    <th scope="col">Options</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+
+                                    <!--<div class="my-5 table_style">
+                                        <table id="SubprojectsTablee" class="table table-sm ">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Subproject ID</th>
+                                                    <th scope="col">HBL</th>
+                                                    <th scope="col">Pieces</th>
+                                                    <th scope="col">Pallets</th>
+                                                    <th scope="col">Works Pall.</th>
+                                                    <th scope="col">Pallets Ex.</th>
+                                                    <th scope="col">Customer</th>
+                                                    <th scope="col">Agent</th>
+                                                    <th scope="col">Product</th>
+                                                    <th scope="col">CFS</th>
+                                                    <th scope="col">Arrival</th>
+                                                    <th scope="col">WHR ID</th>
+                                                    <th scope="col">LFD</th>
+                                                    <th scope="col">Custom R.</th>
                                                     <th scope="col">OUT Date CR</th>
                                                     <th scope="col">CR ID</th>
                                                     <th scope="col">Charges</th>
@@ -576,9 +498,74 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                <tr>
+                                                    <td class="align-middle">DHW-384970</td>
+                                                    
+                                                    <td class="align-top">
+                                                        <ul class="list-group list-group-flush">
+                                                        <li class="align-middle text-start list-group-item px-0">
+                                                                DLYBSDSE25010708
+                                                            </li>
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                (DLYBSDSE25010708)
+                                                            </li>
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                (DISODMCNSY000803)
+                                                            </li>
+                                                        </ul>
+                                                    </td>
+                                                    <td class="align-middle">850</td>
+                                                    <td class="align-middle">50</td>
+                                                    <td class="align-middle"><i class="text-danger fa-solid fa-circle-xmark"></i> No</td>
+                                                    <td class="align-middle"><i class="text-danger fa-solid fa-circle-xmark"></i> No</td>
+                                                    <td class="align-middle" style="white-space:wrap">DOLPHINS LOGISTICS</td>
+                                                    <td class="align-middle"><i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> Yes</td>
+                                                    <td class="align-middle">
+                                                        <ul class="list-group list-group-flush">
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                DLYBSDSE25010708
+                                                            </li>
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                DISODMCNSY000803
+                                                            </li>
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                DLYBSDSE25010708
+                                                            </li>
+                                                            <li class="align-middle text-start list-group-item px-0">
+                                                                DISODMCNSY000803
+                                                            </li>
+                                                        </ul>
+                                                    </td>
+                                                    <td class="align-middle"><i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> Yes</td>
+                                                    <td class="align-middle">03/10/2025</td>
+                                                    <td class="align-middle">DHW-387484</td>
+                                                    <td class="align-middle">03/10/2025</td>
+                                                    <td class="align-middle"><i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> Yes</td>
+                                                    <td class="align-middle">03/10/2025</td>
+                                                    <td class="align-middle">CR13645</td>
+                                                    <td class="align-middle">
+                                                        <ul class="list-group  list-group-flush">
+                                                            <li class="d-flex justify-content-between align-items-center list-group-item px-0">
+                                                                Works <span>450.456</span>
+                                                            </li>
+                                                            <li class="d-flex justify-content-between align-items-center list-group-item px-0">
+                                                                WH Storage <span>450.456</span>
+                                                            </li>
+                                                            <li class="d-flex justify-content-between align-items-center list-group-item px-0">
+                                                                Total <span>450.456</span>
+                                                            </li>
+                                                        </ul>
+                                                    </td>
+                                                    <td class="align-middle">4</td>
+                                                    <td class="align-middle">113.01</td>
+                                                    <td class="align-middle" style="white-space:wrap">CR13645 thsryh</td>
+                                                </tr>
                                             </tbody>
                                         </table>
-                                    </div>
+                                    </div>-->
+                                </div>
+                                <div class="modal-footer mx-4 mb-4" style="border-top:none">
+                                    <button type="button" class="btn btn-danger  close-staticshowcfssubproject" data-bs-dismiss="modal">Close</button>
                                 </div>
                             </div>
                         </div>
@@ -586,42 +573,42 @@
 
                     <!-- Modal añadir nuevo subproject-->
                     <div class="modal fade" id="newcfssubproject" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticnewcfssubproject" aria-hidden="true">
-                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-dialog modal-xxl modal-dialog-centered">
                             <div class="modal-content border border-3" style="--bs-border-opacity: .5;">
                                 <div class="modal-header mx-4" style="border-bottom:none">
-                                    <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticnewcfssubproject">New Subproject</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <h1 class="modal-title mt-4 fs-4 gradient-text text-capitalize fw-bolder" id="staticnewcfssubproject">New House</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"  data-bs-toggle="modal" data-bs-target="#showcfssubproject"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="createcfssubproject" class="centered-form">
+                                    <form id="createcfssubproject" class="centered-formsubproject">
                                         @csrf
                                             <div class="row gx-5">
-                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="display:none">
                                                     <label for="inputnewsubprojectproyectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectproyectid" name="inputnewsubprojectproyectid">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectproyectid"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3" style="display:none">
                                                     <label for="inputnewsubprojectcfsmbl" class="form-label text-nowrap text-capitalize" style="font-weight:500">MBL</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfsmbl" name="inputnewsubprojectcfsmbl">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsmbl"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfssubprojectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Subproject ID</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfssubprojectid" name="inputnewsubprojectcfssubprojectid">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfssubprojectid"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfshbl" class="form-label text-nowrap text-capitalize" style="font-weight:500">HBL</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfshbl" name="inputnewsubprojectcfshbl">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfshbl"></div>
                                                 </div>
 
-                                                <div class="mb-3 pb-2 col-md-6 col-lg-4 d-flex align-items-end justify-content-between">
-                                                    <label class="form-label mb-0 me-2" style="font-weight:500">HBL Reference</label>
+                                                <div class="mb-3 pb-2 col-md-6 col-lg-4  col-xl-3 d-flex align-items-end justify-content-between">
+                                                    <label class="form-label mb-0 me-2" style="font-weight:500">HBL</label>
                                                     <div class="ms-auto">
                                                         <button type="button" class="btn btn-sm btn-primary" id="addhblreference">
                                                             <i class="fa-solid fa-plus"></i>
@@ -632,35 +619,41 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfspieces" class="form-label text-nowrap text-capitalize" style="font-weight:500">Pieces</label>
-                                                    <input type="number" min="0" class="form-control" id="inputnewsubprojectcfspieces" name="inputnewsubprojectcfspieces">
+                                                    <input type="number" min="0" value="0" class="form-control" id="inputnewsubprojectcfspieces" name="inputnewsubprojectcfspieces">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfspieces"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
-                                                    <label for="inputnewsubprojectcfspallets" class="form-label text-nowrap text-capitalize" style="font-weight:500">Pallets</label>
-                                                    <input type="number" min="0" class="form-control" id="inputnewsubprojectcfspallets" name="inputnewsubprojectcfspallets">
-                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspallets"></div>
-                                                </div>
-
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3">
                                                     <label for="inputnewsubprojectcfsworkspalletized" class="form-label" style="font-weight:500">Works/Palletized</label>
-                                                    <select class="form-select" id="inputnewsubprojectcfsworkspalletized" name="inputnewsubprojectcfsworkspalletized">
+                                                    <select class="form-select searchWorksPalletized" id="inputnewsubprojectcfsworkspalletized" name="inputnewsubprojectcfsworkspalletized" data-error-message="Works/Palletized is required.">
                                                         <option selected disabled hidden></option>    
                                                     </select>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsworkspalletized"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3">
                                                     <label for="inputnewsubprojectcfspalletsexchanged" class="form-label" style="font-weight:500">Pallets Exchanged</label>
-                                                    <select class="form-select" id="inputnewsubprojectcfspalletsexchanged" name="inputnewsubprojectcfspalletsexchanged">
+                                                    <select class="form-select searchPalletsExchange" id="inputnewsubprojectcfspalletsexchanged" name="inputnewsubprojectcfspalletsexchanged" data-error-message="Pallets Exchanged is required.">
                                                         <option selected disabled hidden></option>    
                                                     </select>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfspalletsexchanged"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3" style="">
+                                                    <label for="inputnewsubprojectcfspallets" class="form-label text-nowrap text-capitalize" style="font-weight:500">Pallets</label>
+                                                    <input type="number" min="0" value="0" class="form-control" id="inputnewsubprojectcfspallets" name="inputnewsubprojectcfspallets">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspallets"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
+                                                    <label for="inputnewsubprojectcfspalletizedcharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">Palletized Charge</label>
+                                                    <input type="text" readonly class="form-control" id="inputnewsubprojectcfspalletizedcharges" name="inputnewsubprojectcfspalletizedcharges">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfspalletizedcharges"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3">
                                                     <label for="inputnewsubprojectcfscustomer" class="form-label" style="font-weight:500">Customer</label>
                                                     <select class="form-select searchCustomer" id="inputnewsubprojectcfscustomer" name="inputnewsubprojectcfscustomer" data-error-message="Customer is required.">
                                                         <option selected disabled hidden></option>    
@@ -668,23 +661,17 @@
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfscustomer"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
-                                                    <label for="inputnewsubprojectcfscfscheckbox" class="form-label">CFS</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-text">
-                                                            <input class="form-check-input mt-0" type="checkbox" id="inputnewsubprojectcfscfscheckbox" name="inputnewsubprojectcfscfscheckbox" value="" aria-label="Checkbox for following text input">
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <select class="form- select2newcfs searchcfscomment" id="inputnewsubprojectcfscfscomment" name="inputnewsubprojectcfscfscomment" data-error-message="CFS comment is required.">
-                                                                <option selected disabled hidden></option>  
-                                                            </select>
-                                                        </div>
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3 d-flex align-items-end" style="font-weight:500">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Yes" id="checkAgent" name="checkAgent">
+                                                        <label class="form-check-label" for="checkAgent">
+                                                            Agent
+                                                        </label>
                                                     </div>
-                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscfscomment"></div>
                                                 </div>
 
-                                                <div class="mb-3 pb-2 col-md-6 col-lg-4 d-flex align-items-end justify-content-between">
-                                                    <label class="form-label mb-0 me-2" style="font-weight:500">Part N.</label>
+                                                <div class="mb-3 pb-2 col-md-6 col-lg-4 col-xl-3 d-flex align-items-end justify-content-between">
+                                                    <label class="form-label mb-0 me-2" style="font-weight:500">Product</label>
                                                     <div class="ms-auto">
                                                         <button type="button" class="btn btn-sm btn-primary" id="addpartnumber">
                                                             <i class="fa-solid fa-plus"></i>
@@ -695,66 +682,84 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
-                                                    <label for="inputnewsubprojectcfspartnumber" class="form-label"  style="font-weight:500">Part Number</label>
-                                                    <select class="form-select" id="inputnewsubprojectcfspartnumber" name="inputnewsubprojectcfspartnumber">
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3">
+                                                    <label for="inputnewsubprojectcfscfscomment" class="form-label" style="font-weight:500">CFS</label>
+                                                    <select class="form-select searchcfscomment" id="inputnewsubprojectcfscfscomment" name="inputnewsubprojectcfscfscomment" data-error-message="CFS is required.">
                                                         <option selected disabled hidden></option>    
                                                     </select>
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscfscomment"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
+                                                    <label for="inputnewsubprojectcfsarrivaldate" class="form-label text-nowrap text-capitalize" style="font-weight:500">Arrival Date</label>
+                                                    <input type="text" class="form-control datetimepicker" id="inputnewsubprojectcfsarrivaldate" name="inputnewsubprojectcfsarrivaldate" placeholder="MM/DD/YYYY  HH:MM:SS">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsarrivaldate"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfsmagayawhr" class="form-label text-nowrap text-capitalize" style="font-weight:500">WHR ID</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfsmagayawhr" name="inputnewsubprojectcfsmagayawhr">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsmagayawhr"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
-                                                    <label for="inputnewsubprojectcfscustomsreleasecheckbox" class="form-label">Customs Release</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-text">
-                                                            <input class="form-check-input mt-0" type="checkbox" id="inputnewsubprojectcfscustomsreleasecheckbox" name="inputnewsubprojectcfscustomsreleasecheckbox" value="" aria-label="Checkbox for following text input">
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <select class="form- select2newcfs searchcustomerreleasecomment" id="inputnewsubprojectcfscustomsreleasecomment" name="inputnewsubprojectcfscustomsreleasecomment" data-error-message="Custom release comment is required.">
-                                                                <option selected disabled hidden></option>  
-                                                            </select>
-                                                        </div>
-                                                    </div>
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
+                                                    <label for="inputnewsubprojectcfslfd" class="form-label text-nowrap text-capitalize" style="font-weight:500">LFD</label>
+                                                    <input type="text" class="form-control datetimepicker" id="inputnewsubprojectcfslfd" name="inputnewsubprojectcfslfd" placeholder="MM/DD/YYYY  HH:MM:SS">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfslfd"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4  col-xl-3">
+                                                    <label for="inputnewsubprojectcfscustomsreleasecomment" class="form-label" style="font-weight:500">Custom Release</label>
+                                                    <select class="form-select searchcustomerreleasecomment" id="inputnewsubprojectcfscustomsreleasecomment" name="inputnewsubprojectcfscustomsreleasecomment" data-error-message="Custom release is required.">
+                                                        <option selected disabled hidden></option>    
+                                                    </select>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfscustomsreleasecomment"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfsoutdatecr" class="form-label text-nowrap text-capitalize" style="font-weight:500">Out Date CR</label>
                                                     <input type="text" class="form-control datetimepicker" id="inputnewsubprojectcfsoutdatecr" name="inputnewsubprojectcfsoutdatecr">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsoutdatecr"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfsmagayacr" class="form-label text-nowrap text-capitalize" style="font-weight:500">CR ID</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfsmagayacr" name="inputnewsubprojectcfsmagayacr">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsmagayacr"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
-                                                    <label for="inputnewsubprojectcfscharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">Charges</label>
-                                                    <input type="text" class="form-control" id="inputnewsubprojectcfscharges" name="inputnewsubprojectcfscharges">
-                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscharges"></div>
-                                                </div>
-
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfsdalfd" class="form-label text-nowrap text-capitalize" style="font-weight:500">Days After LFD</label>
-                                                    <input type="text" class="form-control" id="inputnewsubprojectcfsdalfd" name="inputnewsubprojectcfsdalfd">
+                                                    <input type="text" readonly class="form-control" id="inputnewsubprojectcfsdalfd" name="inputnewsubprojectcfsdalfd">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsdalfd"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
                                                     <label for="inputnewsubprojectcfscuft" class="form-label text-nowrap text-capitalize" style="font-weight:500">Cuft</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfscuft" name="inputnewsubprojectcfscuft">
                                                     <div class="form-text" id="basic-addon4">1 Cumt - 35.3147 Cuft</div>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfscuft"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4">
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
+                                                    <label for="inputnewsubprojectcfswhstoragecharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">WH Storage Charge</label>
+                                                    <input type="number" min="0" readonly value="0" class="form-control" id="inputnewsubprojectcfswhstoragecharges" name="inputnewsubprojectcfswhstoragecharges">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfswhstoragecharges"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
+                                                    <label for="inputnewsubprojectcfsdeliverycharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">Delivery Charge</label>
+                                                    <input type="number" min="0" value="0" class="form-control" id="inputnewsubprojectcfsdeliverycharges" name="inputnewsubprojectcfsdeliverycharges">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfsdeliverycharges"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3" style="">
+                                                    <label for="inputnewsubprojectcfscharges" class="form-label text-nowrap text-capitalize" style="font-weight:500">Total Charge</label>
+                                                    <input type="text" readonly class="form-control" id="inputnewsubprojectcfscharges" name="inputnewsubprojectcfscharges">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfscharges"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
                                                     <label for="inputnewsubprojectcfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewsubprojectcfsnotes" name="inputnewsubprojectcfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsnotes"></div>
@@ -770,172 +775,6 @@
                         </div>
                     </div>
                 </div>
-
-                    <!--<form id="createcfs" class="centered-form">
-                        @csrf
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfscontainernumber" class="form-label">Container Number</label>
-                                <input type="text" class="form-control" id="inputnewcfscontainernumber" name="inputnewcfscontainernumber">
-                                <div class="invalid-feedback"></div>
-                            </div>
-
-                            <div class="mb-3 col-md-6">
-                                <label for="inputnewcfsetaport" class="form-label">ETA Port</label>
-                                <input type="text" class="form-control datetimepicker" id="inputnewcfsetaport" name="inputnewcfsetaport" placeholder="MM/DD/YYYY  HH:MM:SS">
-                                <div class="invalid-feedback"></div>
-                            </div>
-
-                            <div class="mt-3 col-12 d-flex">
-                                <div class="p-2 pe-0 flex-grow-1">
-                                    <h5 class="gradient-text text-capitalize fw-bolder" >Sub Proyects</h5>
-                                </div>
-                                <div class="p-2">
-                                    <button type="button" class="btn btn-primary" id="newcfsaddsubproyect" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Add Subproyect"><i class="fa-solid fa-plus"></i></button>
-                                </div>
-                                <div class="p-2 mb-4">
-                                    <button type="button" class="btn btn-danger" id="newcfsremovesubproyect" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Remove Subproyect"><i class="fa-solid fa-minus"></i></button>
-                                </div>
-                            </div>
-
-                            <div class="col-12 newcfssubproyects-container">
-                                <div class="row gx-5">
-                                    <div class="mb-3 col-md-6  col-lg-4">
-                                        <label for="inputnewcfssubproyectid" class="form-label">Subproyect ID</label>
-                                        <input type="text" class="form-control" id="inputnewcfssubproyectid" name="inputnewcfssubproyectid">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6  col-lg-4">
-                                        <label for="inputnewcfshbl" class="form-label">HBL</label>
-                                        <input type="text" class="form-control" id="inputnewcfshbl" name="inputnewcfshbl">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfspieces" class="form-label">Pieces</label>
-                                        <input type="number" min="0" class="form-control" id="inputnewcfspieces" name="inputnewcfspieces">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfspallets" class="form-label">Pallets</label>
-                                        <input type="number" min="0" class="form-control" id="inputnewcfspallets" name="inputnewcfspallets">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfscustomer" class="form-label">Customer</label>
-                                        <select class="form-select" id="inputnewcfscustomer" name="inputnewcfscustomer">
-                                            <option selected disabled hidden></option>    
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfscustomer" class="form-label">Customs Release</label>
-                                        <select class="form-select" id="inputnewcfscustomer" name="inputnewcfscustomer">
-                                            <option selected disabled hidden></option>    
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfspartnumber" class="form-label">Part Number</label>
-                                        <select class="form-select" id="inputnewcfspartnumber" name="inputnewcfspartnumber">
-                                            <option selected disabled hidden></option>    
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfscfscheckbox" class="form-label">CFS</label>
-                                        <div class="input-group mb-3">
-                                            <div class="input-group-text">
-                                                <input class="form-check-input mt-0" id="inputnewcfscfscheckbox" name="inputnewcfscfscheckbox" type="checkbox" value="" aria-label="Checkbox for following text input">
-                                            </div>
-                                            <input type="text" class="form-control" id="inputnewcfscfscomment" name="inputnewcfscfscomment" aria-label="Text input with checkbox">
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsdatewhrmedley" class="form-label">Date Warehouse Medley</label>
-                                        <input type="text" class="form-control datetimepicker" id="inputnewcfsdatewhrmedley" name="inputnewcfsdatewhrmedley" placeholder="MM/DD/YYYY HH:MM:SS">
-                                        <div class="form-text" id="basic-addon4">Container arrived</div>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsmagayawhr" class="form-label">Magaya Warehouse</label>
-                                        <input type="text" class="form-control" id="inputnewcfsmagayawhr" name="inputnewcfsmagayawhr">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfslfd" class="form-label">LFD</label>
-                                        <input type="text" class="form-control datetimepicker" id="inputnewcfslfd" name="inputnewcfslfd" placeholder="MM/DD/YYYY HH:MM:SS">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfscustomsreleasecheckbox" class="form-label">Customs Release</label>
-                                        <div class="input-group">
-                                            <div class="input-group-text">
-                                                <input class="form-check-input mt-0" type="checkbox" id="inputnewcfscustomsreleasecheckbox" name="inputnewcfscustomsreleasecheckbox" value="" aria-label="Checkbox for following text input">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <select class="form- select2newcfs" id="inputnewcfscustomsreleasecomment" name="inputnewcfscustomsreleasecomment">
-                                                    <option value="">Choose an option</option>
-                                                    <option value="yes">Yes</option>
-                                                    <option value="no">No</option>  
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsoutdatecr" class="form-label">Out Date - CR</label>
-                                        <input type="text" class="form-control datetimepicker" id="inputnewcfsoutdatecr" name="inputnewcfsoutdatecr" placeholder="MM/DD/YYYY HH:MM:SS">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsmagayacr" class="form-label">Magaya CR</label>
-                                        <input type="text" class="form-control" id="inputnewcfsmagayacr" name="inputnewcfsmagayacr">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsmagayachargespaid" class="form-label">Charges/¿Paid?</label>
-                                        <input type="number" step="0.01" min="0" placeholder="0.00" class="form-control" id="inputnewcfsmagayachargespaid" name="inputnewcfsmagayachargespaid">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsdaysafterlfd" class="form-label">Days after LFD</label>
-                                        <input type="number" min="0" class="form-control" id="inputnewcfsdaysafterlfd" name="inputnewcfsdaysafterlfd">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfscuft" class="form-label">Cuft</label>
-                                        <input type="number" class="form-control" id="inputnewcfscuft" name="inputnewcfscuft">
-                                        <div class="form-text" id="basic-addon4">1 Cumt - 35.3147 Cuft</div>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                    <div class="mb-3 col-md-6 col-lg-4">
-                                        <label for="inputnewcfsnotes" class="form-label">Notes</label>
-                                        <textarea class="form-control" id="inputnewcfsnotes" name="inputnewcfsnotes" rows="1"></textarea>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex ms-auto col-4">
-                                <button type="button" class="btn btn-primary w-100" id="saveButtonShipment">Save</button>
-                            </div>
-                            
-                        </div>
-                    </form>-->
                 </div>
             @endif  
             

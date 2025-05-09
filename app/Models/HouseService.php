@@ -1,19 +1,18 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class Costumer extends Model
+use Illuminate\Database\Eloquent\Model;
+
+class HouseService extends Model
 {
-    protected $table = 'cfs_customer';
-    protected $primaryKey = 'pk_customer';
+    protected $table = 'cfs_h_service';
+    protected $primaryKey = 'pk_h_service';
     public $timestamps = false;
 
     protected $fillable = [
-        'description', 'address', 'city', 'state', 'country', 'zipcode', 'status',
-        'created_by', 'created_date', 'updated_by', 'transaction_date'
+        'fk_hbl', 'fk_service', 'status', 'created_by', 'created_date', 'updated_by', 'transaction_date'
     ];
 
     protected $casts = [
@@ -31,8 +30,13 @@ class Costumer extends Model
         return Carbon::parse($value)->format('m/d/Y H:i:s');
     }
 
-    public function subprojects()
+    public function subproject()
     {
-        return $this->hasMany(Subproject::class, 'customer', 'pk_customer');
+        return $this->belongsTo(Subproject::class, 'fk_hbl', 'hbl');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'fk_service', 'pk_service');
     }
 }

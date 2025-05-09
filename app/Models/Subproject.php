@@ -22,6 +22,7 @@ class Subproject extends Model
         'works_palletized',
         'pallets_exchanged',
         'customer',
+        'agent',
         'cfs_checkbox',
         'cfs_comment',
         'arrival_date',
@@ -31,6 +32,9 @@ class Subproject extends Model
         'customs_release_comment',
         'out_date_cr',
         'cr',
+        'services_charge',
+        'wh_storage_charge',
+        'delivery_charges',
         'charges',
         'days_after_lfd',
         'cuft',
@@ -48,6 +52,9 @@ class Subproject extends Model
         'out_date_cr' => 'datetime',
         'created_date' => 'datetime',
         'transaction_date' => 'datetime',
+        'services_charge' => 'decimal:2',
+        'wh_storage_charge' => 'decimal:2',
+        'delivery_charges' => 'decimal:2',
         'charges' => 'decimal:2',
         'cuft' => 'decimal:2',
     ];
@@ -65,20 +72,43 @@ class Subproject extends Model
         });
     }
 
+    protected $appends = ['arrival_date_full', 'lfd_full', 'out_date_cr_full'];
+
     // Formateo de fechas tipo datetime
     public function getArrivalDateAttribute($value)
     {
-        return Carbon::parse($value)->format('m/d/Y H:i:s');
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+
+    public function getArrivalDateFullAttribute()
+    {
+        return $this->attributes['arrival_date'] 
+            ? Carbon::parse($this->attributes['arrival_date'])->format('m/d/Y H:i:s') 
+            : null;
     }
 
     public function getLfdAttribute($value)
     {
-        return Carbon::parse($value)->format('m/d/Y H:i:s');
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+
+    public function getLfdFullAttribute()
+    {
+        return $this->attributes['lfd'] 
+            ? Carbon::parse($this->attributes['lfd'])->format('m/d/Y H:i:s') 
+            : null;
     }
 
     public function getOutDateCrAttribute($value)
     {
-        return Carbon::parse($value)->format('m/d/Y H:i:s');
+        return $value ? Carbon::parse($value)->format('m/d/Y') : null;
+    }
+    
+    public function getOutDateCrFullAttribute()
+    {
+        return $this->attributes['out_date_cr'] 
+            ? Carbon::parse($this->attributes['out_date_cr'])->format('m/d/Y H:i:s')
+            : null;
     }
 
     public function getCreatedDateAttribute($value)
@@ -112,5 +142,35 @@ class Subproject extends Model
     public function pns()
     {
         return $this->belongsToMany(Pn::class, 'cfs_h_pn', 'fk_hbl', 'fk_pn', 'hbl', 'pk_part_number');
+    }
+
+    //
+    public function hblreferences()
+    {
+        return $this->hasMany(HblReferences::class, 'fk_hbl', 'hbl');
+    }
+
+    // Relación con tabla pivote (cfs_h_pn)
+    public function servicesLinks()
+    {
+        return $this->hasMany(HouseService::class, 'fk_hbl', 'hbl');
+    }
+
+    // Relación many-to-many con servicios reales (cfs_services)
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'cfs_h_service', 'fk_hbl', 'fk_service', 'hbl', 'pk_service');
+    }
+
+    //Relacion para el CFS Comment
+    public function cfscommentRelation()
+    {
+        return $this->belongsTo(GenericCatalogs::class, 'cfs_comment','gnct_id');
+    }
+
+    //Relacion para el Custom Release Comment
+    public function customreleaseRelation()
+    {
+        return $this->belongsTo(GenericCatalogs::class, 'customs_release_comment','gnct_id');
     }
 }

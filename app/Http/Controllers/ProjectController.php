@@ -22,7 +22,7 @@ class ProjectController extends Controller
             $validated = $request->validate([
                 'inputnewcfsprojectprojectid' => 'required|unique:cfs_project,project_id',
                 'inputnewcfsprojectmonth' => 'required|date',
-                //'inputnewcfsprojectinvoice' => 'required',
+                'inputnewcfsprojectinvoice' => 'required',
                 'inputnewcfspeojectdrayageperson' => 'required',
                 'inputnewcfsprojectdrayagefiletype' => 'required',
             ],[
@@ -30,7 +30,7 @@ class ProjectController extends Controller
                 'inputnewcfsprojectprojectid.unique' => 'Project ID already exists.',
                 'inputnewcfsprojectmonth.required' => 'Month is required.',
                 'inputnewcfsprojectmonth.date' => 'Month must be a date.',
-                //'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
+                'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
                 'inputnewcfspeojectdrayageperson.required' => 'Drayage Person is required.',
                 'inputnewcfsprojectdrayagefiletype.required' => 'Drayage File Type is required.',
             ]);
@@ -40,7 +40,7 @@ class ProjectController extends Controller
             Project::create([
                 'project_id' => $request->inputnewcfsprojectprojectid,
                 'month' => $month,
-                //'invoice' => $request->inputnewcfsprojectinvoice,
+                'invoice' => $request->inputnewcfsprojectinvoice,
                 'drayage_user' => $request->inputnewcfspeojectdrayageperson,
                 'drayage_typefile' => $request->inputnewcfsprojectdrayagefiletype,
                 'created_by'=> Auth::check() ? Auth::user()->username : 'system',
@@ -59,13 +59,22 @@ class ProjectController extends Controller
                                 },
                                 'pns' => function ($q) { // <- Aquí es la clave
                                     $q->where('cfs_pn.status', '1');
-                                }
+                                },
+                                'services' => function ($q) {
+                                    $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                },
+                                'hblreferences' => function ($q) { // <- añade esta parte
+                                    $q->where('cfs_hbl_references.status', '1');
+                                },
+                                'cfscommentRelation',
+                                'customreleaseRelation',
                             ]);
                         }
                     ]);
                 },
                 'drayageUserRelation',
                 'drayageFileRelation',
+                'invoiceRelation',
             ])
             ->where('status', '1')
             ->get();   
@@ -108,13 +117,22 @@ class ProjectController extends Controller
                                     },
                                     'pns' => function ($q) { // <- Aquí es la clave
                                         $q->where('cfs_pn.status', '1');
-                                    }
+                                    },
+                                    'services' => function ($q) {
+                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                    },
+                                    'hblreferences' => function ($q) { // <- añade esta parte
+                                        $q->where('cfs_hbl_references.status', '1');
+                                    },
+                                    'cfscommentRelation',
+                                    'customreleaseRelation',
                                 ]);
                             }
                         ]);
                     },
                     'drayageUserRelation',
                     'drayageFileRelation',
+                    'invoiceRelation',
                 ])
                 ->where('status', '1')
                 ->get();   
@@ -139,14 +157,14 @@ class ProjectController extends Controller
             $validated = $request->validate([
                 'inputnewcfsprojectprojectid' => 'required',
                 'inputnewcfsprojectmonth' => 'required|date',
-                //'inputnewcfsprojectinvoice' => 'required',
+                'inputnewcfsprojectinvoice' => 'required',
                 'inputnewcfspeojectdrayageperson' => 'required',
                 'inputnewcfsprojectdrayagefiletype' => 'required',
             ],[
                 'inputnewcfsprojectprojectid.required' => 'Project ID is required.',
                 'inputnewcfsprojectmonth.required' => 'Month is required.',
                 'inputnewcfsprojectmonth.date' => 'Month must be a date.',
-                //'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
+                'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
                 'inputnewcfspeojectdrayageperson.required' => 'Drayage Person is required.',
                 'inputnewcfsprojectdrayagefiletype.required' => 'Drayage File Type is required.',
             ]);
@@ -160,6 +178,7 @@ class ProjectController extends Controller
                 // Actualizar el project
                 $project->drayage_user = $request->inputnewcfspeojectdrayageperson;
                 $project->drayage_typefile = $request->inputnewcfsprojectdrayagefiletype;
+                $project->invoice = $request->inputnewcfsprojectinvoice;
                 $project->month = $month;
                 $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $project->transaction_date = now();
@@ -176,13 +195,22 @@ class ProjectController extends Controller
                                     },
                                     'pns' => function ($q) { // <- Aquí es la clave
                                         $q->where('cfs_pn.status', '1');
-                                    }
+                                    },
+                                    'services' => function ($q) {
+                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                    },
+                                    'hblreferences' => function ($q) { // <- añade esta parte
+                                        $q->where('cfs_hbl_references.status', '1');
+                                    },
+                                    'cfscommentRelation',
+                                    'customreleaseRelation',
                                 ]);
                             }
                         ]);
                     },
                     'drayageUserRelation',
                     'drayageFileRelation',
+                    'invoiceRelation',
                 ])
                 ->where('status', '1')
                 ->get();   

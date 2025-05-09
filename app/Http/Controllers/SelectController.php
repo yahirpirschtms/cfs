@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GenericCatalogs;
 use App\Models\Costumer;
 use App\Models\Pn;
+use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -18,8 +19,12 @@ class SelectController extends Controller
             // Obtener los datos donde el campo gntc_group sea 'drayage_user' o 'drayage_filetype'
             $drayageUserData = GenericCatalogs::where('gntc_group', 'drayage_user')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
             $drayageFiletypeData = GenericCatalogs::where('gntc_group', 'drayage_file')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
-            $customersData = Costumer::where('status', '1')->select('pk_customer', 'name')->get();
+            $cfsData = GenericCatalogs::where('gntc_group', 'cfs_option')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            $customReleaseData = GenericCatalogs::where('gntc_group', 'custom_release')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            $invoiceData = GenericCatalogs::where('gntc_group', 'invoice_option')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            $customersData = Costumer::where('status', '1')->select('pk_customer', 'description')->get();
             $partNumberData = Pn::where('status', '1')->select('pk_part_number', 'description')->get();
+            $serviceData = Service::where('status', '1')->select('pk_service', 'description', 'cost')->get();
 
             // Devolver los datos en formato JSON
             return response()->json([
@@ -27,6 +32,10 @@ class SelectController extends Controller
                 'drayage_filetype' => $drayageFiletypeData,
                 'customers' => $customersData,
                 'part_number' => $partNumberData,
+                'invoice' => $invoiceData,
+                'cfs' => $cfsData,
+                'custom_release' => $customReleaseData,
+                'services' => $serviceData,
             ]);
         }
         return redirect('/login');
@@ -135,6 +144,152 @@ class SelectController extends Controller
                 return response()->json([
                     'message' => 'Part Number already exists',
                     'existingPartNumber' => $existingPartNumber
+                ], 409);
+            }
+        }
+        return redirect('/login');
+    }
+
+    //Funcion para añadir nuevos Customers
+    public function saveNewCustomer(Request $request){
+        if(Auth::check()){
+            $request->validate([
+                'newCustomer'=>'required|string|max:200',
+            ]);
+
+            $existingCustomer = Costumer::where('description',$request->newCustomer)
+                ->where('status','1')
+                ->first();
+            if(!$existingCustomer){
+                $createnewCustomer = new Costumer();
+                $createnewCustomer->description = $request->newCustomer;
+                $createnewCustomer->status = 1;
+                $createnewCustomer->created_date =  now();
+                $createnewCustomer->created_by = Auth::check() ? Auth::user()->username : 'system';
+                $createnewCustomer->save();
+
+                return response()->json([
+                    'message' => 'New customer saved succesfully.',
+                    'newCustomerCreated' => [
+                        'pk_customer' => $createnewCustomer->pk_customer,
+                        'description' => $createnewCustomer->description
+                    ]
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Customer already exists',
+                    'existingCustomer' => $existingCustomer
+                ], 409);
+            }
+        }
+        return redirect('/login');
+    }
+
+    //Funcion para añadir nuevos CFS
+    public function saveNewCFS(Request $request){
+        if(Auth::check()){
+            $request->validate([
+                'newCFS'=>'required|string|max:50',
+            ]);
+
+            $existingCFS = GenericCatalogs::where('gntc_value',$request->newCFS)
+                ->where('gntc_group','cfs_option')
+                ->first();
+            if(!$existingCFS){
+                $createnewCFS = new GenericCatalogs();
+                $createnewCFS->gntc_value = $request->newCFS;
+                $createnewCFS->gntc_description = $request->newCFS;
+                $createnewCFS->gntc_group = 'CFS_OPTION';
+                $createnewCFS->gntc_status = 1;
+                $createnewCFS->gntc_creation_date =  now();
+                $createnewCFS->gntc_user = Auth::check() ? Auth::user()->username : 'system';
+                $createnewCFS->save();
+
+                return response()->json([
+                    'message' => 'New CFS option saved succesfully.',
+                    'newCFSCreated' => [
+                        'gnct_id' => $createnewCFS->gnct_id,
+                        'gntc_value' => $createnewCFS->gntc_value
+                    ]
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'CFS option already exists',
+                    'existingCFS' => $existingCFS
+                ], 409);
+            }
+        }
+        return redirect('/login');
+    }
+
+    //Funcion para añadir nuevos Custom Release
+    public function saveNewCustomRelease(Request $request){
+        if(Auth::check()){
+            $request->validate([
+                'newCustomRelease'=>'required|string|max:50',
+            ]);
+
+            $existingCustomRelease = GenericCatalogs::where('gntc_value',$request->newCustomRelease)
+                ->where('gntc_group','custom_release')
+                ->first();
+            if(!$existingCustomRelease){
+                $createnewCustomRelease = new GenericCatalogs();
+                $createnewCustomRelease->gntc_value = $request->newCustomRelease;
+                $createnewCustomRelease->gntc_description = $request->newCustomRelease;
+                $createnewCustomRelease->gntc_group = 'CUSTOM_RELEASE';
+                $createnewCustomRelease->gntc_status = 1;
+                $createnewCustomRelease->gntc_creation_date =  now();
+                $createnewCustomRelease->gntc_user = Auth::check() ? Auth::user()->username : 'system';
+                $createnewCustomRelease->save();
+
+                return response()->json([
+                    'message' => 'New Custom Release saved succesfully.',
+                    'newCustomReleaseCreated' => [
+                        'gnct_id' => $createnewCustomRelease->gnct_id,
+                        'gntc_value' => $createnewCustomRelease->gntc_value
+                    ]
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Custom Release already exists',
+                    'existingCustomRelease' => $existingCustomRelease
+                ], 409);
+            }
+        }
+        return redirect('/login');
+    }
+
+    //Funcion para añadir nuevos Invoice
+    public function saveNewInvoice(Request $request){
+        if(Auth::check()){
+            $request->validate([
+                'newInvoice'=>'required|string|max:50',
+            ]);
+
+            $existingInvoice = GenericCatalogs::where('gntc_value',$request->newInvoice)
+                ->where('gntc_group','invoice_option')
+                ->first();
+            if(!$existingInvoice){
+                $createnewInvoice = new GenericCatalogs();
+                $createnewInvoice->gntc_value = $request->newInvoice;
+                $createnewInvoice->gntc_description = $request->newInvoice;
+                $createnewInvoice->gntc_group = 'INVOICE_OPTION';
+                $createnewInvoice->gntc_status = 1;
+                $createnewInvoice->gntc_creation_date =  now();
+                $createnewInvoice->gntc_user = Auth::check() ? Auth::user()->username : 'system';
+                $createnewInvoice->save();
+
+                return response()->json([
+                    'message' => 'New Invoice option saved succesfully.',
+                    'newInvoiceCreated' => [
+                        'gnct_id' => $createnewInvoice->gnct_id,
+                        'gntc_value' => $createnewInvoice->gntc_value
+                    ]
+                ]);
+            }else{
+                return response()->json([
+                    'message' => 'Invoice option already exists',
+                    'existingInvoice' => $existingInvoice
                 ], 409);
             }
         }

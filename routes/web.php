@@ -65,4 +65,25 @@ Route::middleware('auth')->group(function () {
 
     //Ruta para añadir un nuevo PartNumber
     Route::post('/saveNewPartNumber', [SelectController::class, 'saveNewPartNumber'])->name('saveNewPartNumber');
+
+    //Ruta para añadir un nuevo Customer
+    Route::post('/saveNewCustomer', [SelectController::class, 'saveNewCustomer'])->name('saveNewCustomer');
+
+    //Ruta para añadir un nuevo CFS
+    Route::post('/saveNewCFS', [SelectController::class, 'saveNewCFS'])->name('saveNewCFS');
+
+    //Ruta para añadir un nuevo Customs Release
+    Route::post('/saveNewCustomRelease', [SelectController::class, 'saveNewCustomRelease'])->name('saveNewCustomRelease');
+
+    //Ruta para añadir un nuevo Invoice
+    Route::post('/saveNewInvoice', [SelectController::class, 'saveNewInvoice'])->name('saveNewInvoice');
+
+    //Ruta para añadir un nuevo Subproject
+    Route::post('/saveNewSubproject', [SubprojectController::class, 'saveNewSubproject'])->name('saveNewSubproject');
+
+    //Ruta para eliminar un Subproject
+    Route::post('/deleteSubproject', [SubprojectController::class, 'deleteSubproject'])->name('deleteSubproject');
+
+    //Ruta para editar un Subproject
+    Route::post('/editNewSubproject', [SubprojectController::class, 'editNewSubproject'])->name('editNewSubproject');
 });
