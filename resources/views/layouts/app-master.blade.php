@@ -234,15 +234,15 @@
   }
 
   td {
-    padding: 15px !important;
+    /*padding: 15px !important;*/
     text-align: left;
     /*border: none;*/
   }
 
   th {
-    padding: 10px;
+    /*padding: 10px;*/
     text-align: left;
-    font-size: 15px;
+    font-size: 13px;
     background-color: #f8f9fa;
     font-weight: bold;
     white-space: nowrap; /* Evita que el texto se envuelva */
@@ -255,7 +255,7 @@
   }
 
   td {
-    font-size: 14px;
+    font-size: 11px;
     white-space: nowrap; /* Evita que el texto se envuelva */
   }
   /* Estilo para pantallas menores o iguales a 768px */
@@ -270,6 +270,19 @@
   }
   /* Cambiar fondo y texto */
   
+  .list-group-horizontal-sm .list-group-item {
+        border: none;
+        border-left: 1px solid #dee2e6;
+        border-top:unset !important;
+    }
+
+    .list-group-horizontal-sm .list-group-item:first-child {
+        border-left: none;
+    }
+
+    .list-group-horizontal-sm .first {
+        border-top: none !important;
+    }
 .tooltip-inner {
     background-color: rgb(13, 82, 200);;  /* Fondo azul */
     color: #fff;  /* Texto blanco */
@@ -290,6 +303,11 @@
 }
 .centered-form {
     max-width: 1050px; /* Limita el ancho máximo a 600px */
+    margin: 0 auto; /* Centra el formulario horizontalmente */
+    padding: 20px; /* Añade un poco de espacio interno */
+}
+.centered-formsubproject {
+    /*max-width: 1050px;  Limita el ancho máximo a 600px */
     margin: 0 auto; /* Centra el formulario horizontalmente */
     padding: 20px; /* Añade un poco de espacio interno */
 }
@@ -380,6 +398,14 @@
     background-color: transparent !important; /* Fondo transparente */
     box-shadow: none !important; /* Eliminar sombra */
     --bs-accordion-active-bg: transparent !important; /* Sobrescribir la variable de fondo */
+}
+.modal-xxl {
+    max-width: 90vw;  /* Ocupa el 90% del ancho de la ventana */
+    width: 90vw;
+}
+.modal-xxxl {
+    max-width: 95vw;  /* Ocupa el 95% del ancho de la ventana */
+    width: 95vw;
 }
 
 

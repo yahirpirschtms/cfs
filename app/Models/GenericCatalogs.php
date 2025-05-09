@@ -10,7 +10,7 @@ class GenericCatalogs extends Model
     use HasFactory;
 
     // El nombre de la tabla en la base de datos
-    protected $table = 'generic_catalogs';
+    protected $table = 'cfs_generic_catalogs';
 
     // La clave primaria de la tabla
     protected $primaryKey = 'gnct_id';
@@ -43,7 +43,6 @@ class GenericCatalogs extends Model
     {
         return $this->belongsTo(GenericCatalogs::class, 'gntc_gntc_id', 'gnct_id');
     }
-
     // Relación para obtener los hijos de un catalogo (si es necesario)
     public function childCatalogs()
     {
@@ -56,5 +55,17 @@ class GenericCatalogs extends Model
     public function drayageFile()
     {
         return $this->hasMany(GenericCatalogs::class, 'drayage_typefile','gnct_id');
+    }
+    public function invoice()
+    {
+        return $this->hasMany(GenericCatalogs::class, 'invoice','gnct_id');
+    }
+    public function cfs()
+    {
+        return $this->hasMany(GenericCatalogs::class, 'cfs_comment','gnct_id');
+    }
+    public function customrelease()
+    {
+        return $this->hasMany(GenericCatalogs::class, 'customs_release_comment','gnct_id');
     }
 }

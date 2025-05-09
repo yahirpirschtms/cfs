@@ -41,7 +41,15 @@ class MasterController extends Controller
                             },
                             'pns' => function ($q) {
                                 $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            }
+                            },
+                            'services' => function ($q) {
+                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                            },
+                            'hblreferences' => function ($q) { // <- añade esta parte
+                                $q->where('cfs_hbl_references.status', '1');
+                            },
+                            'cfscommentRelation',
+                            'customreleaseRelation',
                         ]);
                     }
                 ])
@@ -65,12 +73,12 @@ class MasterController extends Controller
     public function saveNewMaster(Request $request){
         if(Auth::check()) {
             $validated = $request->validate([
-                'inputnewmastercfsmbl' => 'required|unique:cfs_project,project_id',
+                'inputnewmastercfsmbl' => 'required|unique:cfs_master,mbl',
                 'inputnewmastercfsetaport' => 'required|date',
                 'inputnewmastercfsarrivaldate' => 'required|date',
                 'inputnewmastercfslfd' => 'required|date',
                 'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'required',
+                'inputnewmastercfsnotes' => 'nullable',
                 'inputnewmastercfsproyectid' => 'required',
                 
             ],[
@@ -121,7 +129,15 @@ class MasterController extends Controller
                             },
                             'pns' => function ($q) {
                                 $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            }
+                            },
+                            'services' => function ($q) {
+                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                            },
+                            'hblreferences' => function ($q) { // <- añade esta parte
+                                $q->where('cfs_hbl_references.status', '1');
+                            },
+                            'cfscommentRelation',
+                            'customreleaseRelation',
                         ]);
                     }
                 ])
@@ -138,13 +154,22 @@ class MasterController extends Controller
                                     },
                                     'pns' => function ($q) { // <- Aquí es la clave
                                         $q->where('cfs_pn.status', '1');
-                                    }
+                                    },
+                                    'services' => function ($q) {
+                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                    },
+                                    'hblreferences' => function ($q) { // <- añade esta parte
+                                        $q->where('cfs_hbl_references.status', '1');
+                                    },
+                                    'cfscommentRelation',
+                                    'customreleaseRelation',
                                 ]);
                             }
                         ]);
                     },
                     'drayageUserRelation',
                     'drayageFileRelation',
+                    'invoiceRelation',
                 ])
                 ->where('status', '1')
                 ->get();
@@ -172,7 +197,7 @@ class MasterController extends Controller
                 'inputnewmastercfsarrivaldate' => 'required|date',
                 'inputnewmastercfslfd' => 'required|date',
                 'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'required',
+                'inputnewmastercfsnotes' => 'nullable',
                 'inputnewmastercfsproyectid' => 'required',
                 
             ],[
@@ -218,7 +243,15 @@ class MasterController extends Controller
                             },
                             'pns' => function ($q) {
                                 $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            }
+                            },
+                            'services' => function ($q) {
+                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                            },
+                            'hblreferences' => function ($q) { // <- añade esta parte
+                                $q->where('cfs_hbl_references.status', '1');
+                            },
+                            'cfscommentRelation',
+                            'customreleaseRelation',
                         ]);
                     }
                 ])
@@ -234,13 +267,22 @@ class MasterController extends Controller
                                     },
                                     'pns' => function ($q) { // <- Aquí es la clave
                                         $q->where('cfs_pn.status', '1');
-                                    }
+                                    },
+                                    'services' => function ($q) {
+                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                    },
+                                    'hblreferences' => function ($q) { // <- añade esta parte
+                                        $q->where('cfs_hbl_references.status', '1');
+                                    },
+                                    'cfscommentRelation',
+                                    'customreleaseRelation',
                                 ]);
                             }
                         ]);
                     },
                     'drayageUserRelation',
                     'drayageFileRelation',
+                    'invoiceRelation',
                 ])
                 ->where('status', '1')
                 ->get();
@@ -291,7 +333,15 @@ class MasterController extends Controller
                             },
                             'pns' => function ($q) {
                                 $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            }
+                            },
+                            'services' => function ($q) {
+                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                            },
+                            'hblreferences' => function ($q) { // <- añade esta parte
+                                $q->where('cfs_hbl_references.status', '1');
+                            },
+                            'cfscommentRelation',
+                            'customreleaseRelation',
                         ]);
                     }
                 ])
@@ -307,13 +357,22 @@ class MasterController extends Controller
                                     },
                                     'pns' => function ($q) { // <- Aquí es la clave
                                         $q->where('cfs_pn.status', '1');
-                                    }
+                                    },
+                                    'services' => function ($q) {
+                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
+                                    },
+                                    'hblreferences' => function ($q) { // <- añade esta parte
+                                        $q->where('cfs_hbl_references.status', '1');
+                                    },
+                                    'cfscommentRelation',
+                                    'customreleaseRelation',
                                 ]);
                             }
                         ]);
                     },
                     'drayageUserRelation',
                     'drayageFileRelation',
+                    'invoiceRelation',
                 ])
                 ->where('status', '1')
                 ->get();

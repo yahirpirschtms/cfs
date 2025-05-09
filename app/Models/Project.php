@@ -24,9 +24,18 @@ class Project extends Model
         'transaction_date' => 'datetime',
     ];
 
+    protected $appends = ['month_full'];
+
     public function getMonthAttribute($value)
     {
-        return Carbon::parse($value)->format('m/d/Y');
+        return $value ? Carbon::parse($value)->format('M/j') : null;
+    }
+
+    public function getMonthFullAttribute()
+    {
+        return $this->attributes['month'] 
+            ? Carbon::parse($this->attributes['month'])->format('m/d/Y')
+            : null;
     }
 
     public function getCreatedDateAttribute($value)
@@ -50,5 +59,9 @@ class Project extends Model
     public function drayageFileRelation()
     {
         return $this->belongsTo(GenericCatalogs::class, 'drayage_typefile','gnct_id');
+    }
+    public function invoiceRelation()
+    {
+        return $this->belongsTo(GenericCatalogs::class, 'invoice','gnct_id');
     }
 }
