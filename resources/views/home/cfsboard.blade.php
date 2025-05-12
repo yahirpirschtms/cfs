@@ -759,6 +759,15 @@
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfscharges"></div>
                                                 </div>
 
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3 d-flex align-items-end" style="font-weight:500">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Yes" id="checkCollected" name="checkCollected">
+                                                        <label class="form-check-label" for="checkCollected">
+                                                            Collected
+                                                        </label>
+                                                    </div>
+                                                </div>
+
                                                 <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
                                                     <label for="inputnewsubprojectcfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewsubprojectcfsnotes" name="inputnewsubprojectcfsnotes"></textarea>
