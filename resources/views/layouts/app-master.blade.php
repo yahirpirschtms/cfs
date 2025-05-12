@@ -34,6 +34,17 @@
           display: none;
       }
 
+      tr.bg-light-blue {
+          --bs-table-bg: rgba(13, 82, 200, 0.08);
+      }
+      tr.bg-light-green {
+          --bs-table-bg: rgba(0, 150, 50, 0.08);
+      }
+      tr.bg-light-blue .list-group-item,
+      tr.bg-light-green .list-group-item {
+          background-color: unset !important;
+      }
+
       .gradient-text {
         background: linear-gradient(135deg, #1e4877, rgb(13, 82, 200));
         -webkit-background-clip: text;

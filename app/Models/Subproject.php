@@ -36,6 +36,7 @@ class Subproject extends Model
         'wh_storage_charge',
         'delivery_charges',
         'charges',
+        'collected',
         'days_after_lfd',
         'cuft',
         'notes',

@@ -2102,7 +2102,7 @@ $(document).ready(function() {
             const pnsList = (sub.pns || []).map(pn => `<li class="list-group-item px-0">${pn.description}</li>`).join('');
             
             const chargesList = `
-                <li style="" class="d-flex justify-content-between list-group-item px-0">
+                <!--<li style="" class="d-flex justify-content-between list-group-item px-0">
                     Works <span class="ms-1">${sub.services_charge}</span>
                 </li>
                 <li style="" class="d-flex justify-content-between list-group-item px-0">
@@ -2113,11 +2113,18 @@ $(document).ready(function() {
                 </li>
                 <li style="" class="d-flex justify-content-between list-group-item px-0">
                     Total <span class="ms-1">${sub.charges}</span>
-                </li>
+                </li>-->
             `;
-    
+
+            let rowHighlightClass = '';
+            if (sub.collected === 'Yes') {
+                rowHighlightClass = 'bg-light-green';
+            } else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') {
+                rowHighlightClass = 'bg-light-blue';
+            }
+
             const rowHTML = `
-                <tr>
+                <tr class="${rowHighlightClass}">
                     <td class="align-middle">${sub.subprojects_id}</td>
                     <td class="align-middle">
                         <ul class="list-group list-group-flush">${hblList}</ul>
@@ -2138,9 +2145,10 @@ $(document).ready(function() {
                     <td class="align-middle">${customrelease}</td>
                     <td class="align-middle">${sub.out_date_cr || ''}</td>
                     <td class="align-middle">${sub.cr || ''}</td>
-                    <td class="align-middle">
+                    <!--<td class="align-middle">
                         <ul class="list-group list-group-flush">${chargesList}</ul>
-                    </td>
+                    </td>-->
+                    <td class="align-middle">${sub.charges || '0'}</td>
                     <td class="align-middle">${sub.days_after_lfd || '0'}</td>
                     <td class="align-middle">${sub.cuft || ''}</td>
                     <td class="align-middle">${sub.notes || ''}</td>
