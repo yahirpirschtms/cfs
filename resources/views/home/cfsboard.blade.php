@@ -437,7 +437,7 @@
                                         </button>
                                     </div>
 
-                                    <div class="my-5 table_style">
+                                    <div class=" table_style">
                                         <table id="SubprojectsTable" class="table table-sm ">
                                             <thead>
                                                 <tr>
