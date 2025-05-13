@@ -1770,7 +1770,7 @@ $(document).ready(function() {
                             // Restauramos el filtro anterior
                             tableSubprojects.search(currentFilter).draw();
                             //Cambiar el titulo del modal
-                            $('#staticshowcfssubproject').text(`Subprojects list ${master.mbl}`);
+                            $('#staticshowcfssubproject').text(`Houses list ${master.mbl}`);
                             //$('#showcfsmaster').modal('hide');
                             $('#searchgeneralcfsboardsubprojects').val('');
                             // Asignar valores al botón de agregar subproyecto
@@ -2043,9 +2043,10 @@ $(document).ready(function() {
         $(modalSelector).find('select').not('.select2').val('');
 
         $('#checkAgent').prop('checked', false);
+        $('#checkCollected').prop('checked', false);
 
         //$('#editnewcfsproject').text('Save').attr('id', 'savecfssubproject');
-        $('#staticnewcfssubproject').text('New Subproject');
+        $('#staticnewcfssubproject').text('New House');
         //$('#inputnewcfsprojectprojectid')
         //.prop('readonly', false); 
         const dateInputs = ['#inputnewsubprojectcfsarrivaldate', '#inputnewsubprojectcfslfd'];
@@ -2808,6 +2809,7 @@ $(document).ready(function() {
             Promise.all([customerPromise, cfsPromise, customreleasePromise, worksPalletizedPromise, palletsExchangePromise])
                 .then(() => {
                     // Cambiar  el texto del botón
+                    $('#staticnewcfssubproject').text(`Edit House  ${subproject.hbl}`);
                     $('#savecfssubproject').text('Save Changes').attr('id', 'editcfssubproject');
                 
                     // Llenar los inputs con los datos del proyecto
@@ -2840,6 +2842,12 @@ $(document).ready(function() {
                         $('#checkAgent').prop('checked', true);
                     } else {
                         $('#checkAgent').prop('checked', false);
+                    }
+
+                    if (subproject.collected === "Yes") {
+                        $('#checkCollected').prop('checked', true);
+                    } else {
+                        $('#checkCollected').prop('checked', false);
                     }
 
                     $('#showcfssubproject').modal('hide');
