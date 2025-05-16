@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Master;
 use App\Models\Subproject;
 use App\Models\Costumer;
@@ -97,7 +97,8 @@ class ProjectController extends Controller
             ]);
 
             // Obtener el proyecto por el ID
-            $project = Project::find($request->project_id);
+            //$project = Project::find($request->project_id);
+            $project = Project::with(['masters.subprojects.hblreferences', 'masters.subprojects.pns'])->find($request->project_id);
 
             if ($project) {
                 // Actualizar el estado del proyecto a 0
@@ -105,6 +106,36 @@ class ProjectController extends Controller
                 $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $project->transaction_date = now();
                 $project->save();
+
+                // Desactivar masters relacionados
+                foreach ($project->masters as $master) {
+                    $master->status = 0;
+                    $master->updated_by = Auth::user()->username;
+                    $master->transaction_date = now();
+                    $master->save();
+
+                    // Desactivar subprojects relacionados
+                    foreach ($master->subprojects as $subproject) {
+                        $subproject->status = 0;
+                        $subproject->updated_by = Auth::user()->username;
+                        $subproject->transaction_date = now();
+                        $subproject->save();
+
+                        // Eliminar hbl_references
+                        foreach ($subproject->hblreferences as $hbl) {
+                            $hbl->delete();
+                        }
+
+                        // Desactivar part numbers (pns)
+                        DB::table('cfs_h_pn')
+                        ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
+                        ->update([
+                            'status' => 0,
+                            'updated_by' => Auth::user()->username,
+                            'transaction_date' => now(),
+                        ]);
+                    }
+                }
 
                 // Obtener todos los proyectos con sus relaciones necesarias
                 $projects = Project::with([

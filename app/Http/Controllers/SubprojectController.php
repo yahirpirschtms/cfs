@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Master;
 use App\Models\Subproject;
 use App\Models\Costumer;
@@ -395,6 +395,14 @@ class SubprojectController extends Controller
                 $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $subproject->transaction_date = now();
                 $subproject->save();
+
+                // Desactivar Part Numbers asociados (status = 0)
+                DB::table('cfs_h_pn')
+                ->where('fk_hbl', $subproject->hbl)
+                ->update(['status' => 0]);
+
+                // Eliminar HBL References asociados
+                $subproject->hblreferences()->delete();
 
                 // Obtener los subprojects relacionados al mbl
                 $subprojects = Subproject::where('fk_mbl', $request->mbl)
