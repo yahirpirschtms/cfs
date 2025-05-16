@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class MasterController extends Controller
 {
@@ -191,8 +192,13 @@ class MasterController extends Controller
     //Funcion para editar un project
     public function editNewMaster(Request $request){
         if (Auth::check()) {
+            $originalId = $request->input('inputnewmastercfsmbloriginal');
+
             $validated = $request->validate([
-                'inputnewmastercfsmbl' => 'required',
+                'inputnewmastercfsmbl' => [
+                    'required',
+                    Rule::unique('cfs_master', 'mbl')->ignore($originalId, 'mbl')
+                ],
                 'inputnewmastercfsetaport' => 'required|date',
                 'inputnewmastercfsarrivaldate' => 'required|date',
                 'inputnewmastercfslfd' => 'required|date',
@@ -202,6 +208,7 @@ class MasterController extends Controller
                 
             ],[
                 'inputnewmastercfsmbl.required' => 'MBL is required.',
+                'inputnewmastercfsmbl.unique' => 'MBL already exists.',
                 'inputnewmastercfsetaport.required' => 'ETA Port is required.',
                 'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
                 'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
@@ -218,10 +225,15 @@ class MasterController extends Controller
             $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
 
             // Obtener el proyecto por el ID
-            $masters = Master::find($request->inputnewmastercfsmbl);
+            $masters = Master::find($originalId);
 
             if ($masters) {
+                // Guardamos el MBL original antes del cambio
+                $oldMasterMBL = $masters->mbl;
+                $newMasterMBL = $request->inputnewmastercfsmbl;
+
                 // Actualizar el project
+                $masters->mbl = $newMasterMBL;
                 $masters->notes = $request->inputnewmastercfsnotes;
                 $masters->container_number = $request->inputnewmastercfscontainernumber;
                 $masters->eta_port = $etaport;
@@ -230,6 +242,13 @@ class MasterController extends Controller
                 $masters->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $masters->transaction_date = now();
                 $masters->save();
+
+                // Si el MBL cambió, actualizamos los subprojects relacionados
+                if ($oldMasterMBL !== $newMasterMBL) {
+                    DB::table('cfs_subprojects')
+                        ->where('fk_mbl', $oldMasterMBL)
+                        ->update(['fk_mbl' => $newMasterMBL]);
+                }
 
                 // Obtener los masters con relaciones anidadas actualizadas
                 $masters = Master::where('fk_project_id', $request->inputnewmastercfsproyectid)

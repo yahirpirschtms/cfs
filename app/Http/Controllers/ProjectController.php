@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -185,14 +186,21 @@ class ProjectController extends Controller
     //Funcion para editar un project
     public function editNewProject(Request $request){
         if (Auth::check()) {
+            $originalId = $request->input('inputnewcfsprojectprojectidoriginal');
+
             $validated = $request->validate([
-                'inputnewcfsprojectprojectid' => 'required',
+                //'inputnewcfsprojectprojectid' => 'required|unique:cfs_project,project_id',
+                'inputnewcfsprojectprojectid' => [
+                    'required',
+                    Rule::unique('cfs_project', 'project_id')->ignore($originalId, 'project_id')
+                ],
                 'inputnewcfsprojectmonth' => 'required|date',
                 'inputnewcfsprojectinvoice' => 'required',
                 'inputnewcfspeojectdrayageperson' => 'required',
                 'inputnewcfsprojectdrayagefiletype' => 'required',
             ],[
                 'inputnewcfsprojectprojectid.required' => 'Project ID is required.',
+                'inputnewcfsprojectprojectid.unique' => 'Project ID already exists.',
                 'inputnewcfsprojectmonth.required' => 'Month is required.',
                 'inputnewcfsprojectmonth.date' => 'Month must be a date.',
                 'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
@@ -201,12 +209,18 @@ class ProjectController extends Controller
             ]);
 
             $month = Carbon::createFromFormat('m/d/Y', $request->inputnewcfsprojectmonth)->format('Y-m-d'); // Solo fecha
-
+            
             // Obtener el proyecto por el ID
-            $project = Project::find($request->inputnewcfsprojectprojectid);
+            //$project = Project::find($request->inputnewcfsprojectprojectid);
+            $project = Project::find($originalId);
 
             if ($project) {
+                // Guardamos el project_id original antes del cambio
+                $oldProjectId = $project->project_id;
+                $newProjectId = $request->inputnewcfsprojectprojectid;
+
                 // Actualizar el project
+                $project->project_id = $newProjectId;
                 $project->drayage_user = $request->inputnewcfspeojectdrayageperson;
                 $project->drayage_typefile = $request->inputnewcfsprojectdrayagefiletype;
                 $project->invoice = $request->inputnewcfsprojectinvoice;
@@ -214,6 +228,13 @@ class ProjectController extends Controller
                 $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $project->transaction_date = now();
                 $project->save();
+
+                // Si el project_id cambió, actualizamos los masters relacionados
+                if ($oldProjectId !== $newProjectId) {
+                    DB::table('cfs_master')
+                        ->where('fk_project_id', $oldProjectId)
+                        ->update(['fk_project_id' => $newProjectId]);
+                }
 
                 // Obtener todos los proyectos con sus relaciones necesarias
                 $projects = Project::with([

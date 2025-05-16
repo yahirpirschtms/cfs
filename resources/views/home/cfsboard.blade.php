@@ -195,6 +195,13 @@
                                     <form id="createeditnewcfsproject" class="centered-form">
                                         @csrf
                                             <div class="row gx-5">
+
+                                                <div class="mb-3 col-md-6" style="display:none">
+                                                    <label for="inputnewcfsprojectprojectidoriginal" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID Original</label>
+                                                    <input type="text" class="form-control" id="inputnewcfsprojectprojectidoriginal" name="inputnewcfsprojectprojectidoriginal">
+                                                    <div class="invalid-feedback" id="error-inputnewcfsprojectprojectidoriginal"></div>
+                                                </div>
+
                                                 <div class="mb-3 col-md-6">
                                                     <label for="inputnewcfsprojectprojectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
                                                     <input type="text" class="form-control" id="inputnewcfsprojectprojectid" name="inputnewcfsprojectprojectid">
@@ -343,6 +350,12 @@
                                                     <label for="inputnewmastercfsproyectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Proyect ID</label>
                                                     <input type="text" class="form-control" id="inputnewmastercfsproyectid" name="inputnewmastercfsproyectid">
                                                     <div class="invalid-feedback" id="error-inputnewmastercfsproyectid"></div>
+                                                </div>
+
+                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none">
+                                                    <label for="inputnewmastercfsmbloriginal" class="form-label text-nowrap text-capitalize" style="font-weight:500">MBL Original</label>
+                                                    <input type="text" class="form-control" id="inputnewmastercfsmbloriginal" name="inputnewmastercfsmbloriginal">
+                                                    <div class="invalid-feedback" id="error-inputnewmastercfsmbloriginal"></div>
                                                 </div>
 
                                                 <div class="mb-3 col-md-6 col-lg-4">
@@ -599,6 +612,12 @@
                                                     <label for="inputnewsubprojectcfssubprojectid" class="form-label text-nowrap text-capitalize" style="font-weight:500">Subproject ID</label>
                                                     <input type="text" class="form-control" id="inputnewsubprojectcfssubprojectid" name="inputnewsubprojectcfssubprojectid">
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfssubprojectid"></div>
+                                                </div>
+
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3" style="display:none">
+                                                    <label for="inputnewsubprojectcfshbloriginal" class="form-label text-nowrap text-capitalize" style="font-weight:500">HBL Original</label>
+                                                    <input type="text" class="form-control" id="inputnewsubprojectcfshbloriginal" name="inputnewsubprojectcfshbloriginal">
+                                                    <div class="invalid-feedback" id="error-inputnewsubprojectcfshbloriginal"></div>
                                                 </div>
 
                                                 <div class="mb-4 col-md-6 col-lg-4  col-xl-3" style="">
