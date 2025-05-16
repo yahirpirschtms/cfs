@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use App\Models\Master;
 use App\Models\Subproject;
 use App\Models\Costumer;
@@ -312,7 +312,8 @@ class MasterController extends Controller
             ]);
 
             // Obtener el Master por el ID
-            $master = Master::find($request->mbl);
+            //$master = Master::find($request->mbl);
+            $master = Master::with(['subprojects.hblreferences','subprojects.pns'])->find($request->mbl);
 
             if ($master) {
                 // Actualizar el estado del master a 0
@@ -320,6 +321,29 @@ class MasterController extends Controller
                 $master->updated_by = Auth::check() ? Auth::user()->username : 'system';
                 $master->transaction_date = now();
                 $master->save();
+
+                // Procesar subprojects relacionados
+                foreach ($master->subprojects as $subproject) {
+                    // Cambiar status del subproject
+                    $subproject->status = 0;
+                    $subproject->updated_by = Auth::user()->username;
+                    $subproject->transaction_date = now();
+                    $subproject->save();
+
+                    // Eliminar HBL references
+                    foreach ($subproject->hblreferences as $hbl) {
+                        $hbl->delete();
+                    }
+
+                    // Desactivar part numbers (pns)
+                    DB::table('cfs_h_pn')
+                    ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
+                    ->update([
+                        'status' => 0,
+                        'updated_by' => Auth::user()->username,
+                        'transaction_date' => now(),
+                    ]);
+                }
 
                 // Obtener los masters con relaciones anidadas actualizadas
                 $masters = Master::where('fk_project_id', $request->project_id)
