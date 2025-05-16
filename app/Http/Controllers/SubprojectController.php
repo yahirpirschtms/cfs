@@ -694,6 +694,8 @@ class SubprojectController extends Controller
                             ]);
                         }
                     }
+                } else {
+                    Partnumber::where('fk_hbl', $subprojectId)->delete();
                 }
                 /*if ($request->has('part_numbers') && is_array($request->part_numbers)) {
                     $partNumbers = array_filter($request->part_numbers, fn($pn) => !empty($pn));
