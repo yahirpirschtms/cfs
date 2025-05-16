@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class SubprojectController extends Controller
 {
@@ -501,11 +502,17 @@ class SubprojectController extends Controller
     //Funcion añadir nuevo subproject
     public function editNewSubproject(Request $request){
         if(Auth::check()) {
+            $originalId = $request->input('inputnewsubprojectcfshbloriginal');
+            
             $validated = $request->validate([
                 'inputnewsubprojectproyectid' => 'required',
                 'inputnewsubprojectcfsmbl' => 'required',
                 'inputnewsubprojectcfssubprojectid' => 'required',
-                'inputnewsubprojectcfshbl' => 'required',
+                //'inputnewsubprojectcfshbl' => 'required',
+                'inputnewsubprojectcfshbl' => [
+                    'required',
+                    Rule::unique('cfs_subprojects', 'hbl')->ignore($originalId, 'hbl')
+                ],
                 // Validación de los nuevos arreglos (hbl_references y part_numbers)
                 'hbl_references' => 'nullable|array',
                 'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
@@ -590,10 +597,14 @@ class SubprojectController extends Controller
                 // Actualizar el subproject
 
                 // Obtener el proyecto por el ID
-                $subproject = Subproject::find($request->inputnewsubprojectcfshbl);
+                $subproject = Subproject::find($originalId);
 
                 if($subproject){
-                    //$subproject->hbl = $request->inputnewsubprojectcfshbl;
+                    // Guardamos el HBL original antes del cambio
+                    $oldHBL = $subproject->hbl;
+                    $newHBL = $request->inputnewsubprojectcfshbl;
+
+                    $subproject->hbl = $newHBL;
                     //$subproject->fk_mbl = $request->inputnewsubprojectcfsmbl;
                     $subproject->subprojects_id = $request->inputnewsubprojectcfssubprojectid;
                     $subproject->pieces = $request->inputnewsubprojectcfspieces;
@@ -620,6 +631,17 @@ class SubprojectController extends Controller
                     $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
                     $subproject->transaction_date = now();
                     $subproject->save();
+
+                    // Si el hbl cambió, actualizamos los part numbers y hbl references relacionados
+                    if ($oldHBL !== $newHBL) {
+                        DB::table('cfs_hbl_references')
+                            ->where('fk_hbl', $oldHBL)
+                            ->update(['fk_hbl' => $newHBL]);
+
+                        DB::table('cfs_h_pn')
+                            ->where('fk_hbl', $oldHBL)
+                            ->update(['fk_hbl' => $newHBL]);
+                    }
                 }
                 // Obtener el subproyecto recién creado
                 $subprojectId = $subproject->hbl;
@@ -654,37 +676,22 @@ class SubprojectController extends Controller
                     HblReferences::where('fk_hbl', $subprojectId)->delete();
                 }
 
-                if ($request->has('hbl_references') && is_array($request->hbl_references)) {
-                    $references = array_filter($request->hbl_references, fn($ref) => !empty($ref));
-                    $existingDescriptions = [];
-                
-                    foreach ($references as $ref) {
-                        $exists = HblReferences::where('fk_hbl', $subprojectId)
-                            ->where('description', $ref)
-                            ->exists();
-                
-                        if (!$exists) {
-                            HblReferences::create([
-                                'fk_hbl' => $subprojectId,
-                                'description' => $ref,
+                // Actualizar part_numbers
+                if ($request->has('part_numbers') && is_array($request->part_numbers)) {
+                    DB::table('cfs_h_pn')->where('fk_hbl', $newHBL)->delete();
+                    foreach ($request->part_numbers as $pn) {
+                        if (!empty($pn)) {
+                            DB::table('cfs_h_pn')->insert([
+                                'fk_hbl' => $newHBL,
+                                'fk_pn' => $pn,
                                 'status' => '1',
                                 'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
+                                'created_date' => now()
                             ]);
                         }
-                
-                        $existingDescriptions[] = $ref;
                     }
-                
-                    // Eliminar referencias que ya no están en el array enviado
-                    HblReferences::where('fk_hbl', $subprojectId)
-                        ->whereNotIn('description', $existingDescriptions)
-                        ->delete();
-                } else {
-                    HblReferences::where('fk_hbl', $subprojectId)->delete();
                 }
-
-                if ($request->has('part_numbers') && is_array($request->part_numbers)) {
+                /*if ($request->has('part_numbers') && is_array($request->part_numbers)) {
                     $partNumbers = array_filter($request->part_numbers, fn($pn) => !empty($pn));
                     $existingPartNumbers = [];
                 
@@ -712,7 +719,7 @@ class SubprojectController extends Controller
                         ->delete();
                 } else {
                     Partnumber::where('fk_hbl', $subprojectId)->delete();
-                }
+                }*/
 
                 // Obtener los subprojects relacionados al mbl
                 $subprojects = Subproject::where('fk_mbl', $request->inputnewsubprojectcfsmbl)

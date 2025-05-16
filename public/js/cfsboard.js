@@ -1161,8 +1161,9 @@ $(document).ready(function() {
                     $('#saveeditnewcfsproject').text('Save Changes').attr('id', 'editnewcfsproject');
                 
                     // Llenar los inputs con los datos del proyecto
-                    $('#inputnewcfsprojectprojectid').val(project.project_id)
-                    .prop('readonly', true); // Deshabilitar el input
+                    $('#inputnewcfsprojectprojectid').val(project.project_id);
+                    $('#inputnewcfsprojectprojectidoriginal').val(project.project_id);
+                    //.prop('readonly', true); // Deshabilitar el input
 
                     $('#inputnewcfsprojectmonth').val(project.month_full);
 
@@ -1532,8 +1533,9 @@ $(document).ready(function() {
                     $('#savecfsmaster').text('Save Changes').attr('id', 'editnewcfsmaster');
                 
                     // Llenar los inputs con los datos del proyecto
-                    $('#inputnewmastercfsmbl').val(master.mbl)
-                    .prop('readonly', true); // Deshabilitar el input
+                    $('#inputnewmastercfsmbl').val(master.mbl);
+                    $('#inputnewmastercfsmbloriginal').val(master.mbl);
+                    //.prop('readonly', true); // Deshabilitar el input
 
                     $('#inputnewmastercfsproyectid').val(master.fk_project_id);
                     $('#inputnewmastercfscontainernumber').val(master.container_number);
@@ -2813,8 +2815,9 @@ $(document).ready(function() {
                     $('#savecfssubproject').text('Save Changes').attr('id', 'editcfssubproject');
                 
                     // Llenar los inputs con los datos del proyecto
-                    $('#inputnewsubprojectcfshbl').val(subproject.hbl)
-                    .prop('readonly', true); // Deshabilitar el input
+                    $('#inputnewsubprojectcfshbl').val(subproject.hbl);
+                    $('#inputnewsubprojectcfshbloriginal').val(subproject.hbl);
+                    //.prop('readonly', true); // Deshabilitar el input
 
                     $('#inputnewsubprojectproyectid').val(master.fk_project_id);
                     $('#inputnewsubprojectcfsmbl').val(master.mbl);
