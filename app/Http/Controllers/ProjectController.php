@@ -233,6 +233,7 @@ class ProjectController extends Controller
                 if ($oldProjectId !== $newProjectId) {
                     DB::table('cfs_master')
                         ->where('fk_project_id', $oldProjectId)
+                        ->where('status', 1) // condición adicional
                         ->update(['fk_project_id' => $newProjectId]);
                 }
 

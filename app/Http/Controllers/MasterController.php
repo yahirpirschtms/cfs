@@ -247,6 +247,7 @@ class MasterController extends Controller
                 if ($oldMasterMBL !== $newMasterMBL) {
                     DB::table('cfs_subprojects')
                         ->where('fk_mbl', $oldMasterMBL)
+                        ->where('status', 1) // condición adicional
                         ->update(['fk_mbl' => $newMasterMBL]);
                 }
 

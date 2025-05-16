@@ -635,10 +635,12 @@ class SubprojectController extends Controller
                     // Si el hbl cambió, actualizamos los part numbers y hbl references relacionados
                     if ($oldHBL !== $newHBL) {
                         DB::table('cfs_hbl_references')
+                            ->where('status', 1) // condición adicional
                             ->where('fk_hbl', $oldHBL)
                             ->update(['fk_hbl' => $newHBL]);
 
                         DB::table('cfs_h_pn')
+                            ->where('status', 1) // condición adicional
                             ->where('fk_hbl', $oldHBL)
                             ->update(['fk_hbl' => $newHBL]);
                     }
@@ -653,6 +655,7 @@ class SubprojectController extends Controller
                     foreach ($references as $ref) {
                         $exists = HblReferences::where('fk_hbl', $subprojectId)
                             ->where('description', $ref)
+                            ->where('status', 1) // condición adicional
                             ->exists();
                 
                         if (!$exists) {
@@ -670,6 +673,7 @@ class SubprojectController extends Controller
                 
                     // Eliminar referencias que ya no están en el array enviado
                     HblReferences::where('fk_hbl', $subprojectId)
+                        ->where('status', 1) // condición adicional
                         ->whereNotIn('description', $existingDescriptions)
                         ->delete();
                 } else {
