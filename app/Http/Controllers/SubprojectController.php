@@ -499,7 +499,7 @@ class SubprojectController extends Controller
         return redirect('/login');
     }
 
-    //Funcion añadir nuevo subproject
+    //Funcion editar nuevo subproject
     public function editNewSubproject(Request $request){
         if(Auth::check()) {
             $originalId = $request->input('inputnewsubprojectcfshbloriginal');
