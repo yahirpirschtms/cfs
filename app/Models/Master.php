@@ -92,6 +92,6 @@ class Master extends Model
 
     public function subprojects()
     {
-        return $this->hasMany(Subproject::class, 'fk_mbl', 'mbl');
+        return $this->hasMany(Subproject::class, 'fk_mbl', 'mbl')->where('status', '1');
     }
 }

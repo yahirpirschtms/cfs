@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\Master;
 use App\Models\Subproject;
+use App\Models\Service;
 use App\Models\Costumer;
 use App\Models\Partnumber;
 use App\Models\Pn;
@@ -249,6 +250,20 @@ class MasterController extends Controller
                         ->where('fk_mbl', $oldMasterMBL)
                         ->where('status', 1) // condición adicional
                         ->update(['fk_mbl' => $newMasterMBL]);
+                }
+
+                // Actualizar todos los subprojects relacionados
+                $subprojects = Subproject::where('fk_mbl', $newMasterMBL)
+                    ->where('status', '1')
+                    ->get();
+
+                foreach ($subprojects as $sub) {
+                    $sub->arrival_date = $arrivaldate;
+                    $sub->lfd = $lfd;
+                    $sub->save();
+
+                    // Recalcular cargos automáticamente
+                    $sub->recalculateStorageAndCharges();
                 }
 
                 // Obtener los masters con relaciones anidadas actualizadas
