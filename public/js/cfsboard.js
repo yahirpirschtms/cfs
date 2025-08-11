@@ -1464,7 +1464,7 @@ $(document).ready(function() {
                 }).then(() =>{
                     // Actualizamos la variable global con los nuevos datos
                     window.projectsData = response.projects;
-                    window.mastersData = response.masters;
+                    //window.mastersData = response.masters;
                     // Guardamos el valor actual del filtro
                     const currentFilterproject = table.search();
                     // Re-renderizamos la tabla
@@ -1619,7 +1619,7 @@ $(document).ready(function() {
                 }).then(() =>{
                     // Actualizamos la variable global con los nuevos datos
                     window.projectsData = response.projects;
-                    window.mastersData = response.masters;
+                    //window.mastersData = response.masters;
                     // Guardamos el valor actual del filtro
                     const currentFilterproject = table.search();
                     // Re-renderizamos la tabla
@@ -1711,7 +1711,7 @@ $(document).ready(function() {
                                 }).then(() =>{
                                     // Actualizamos la variable global con los nuevos datos
                                     window.projectsData = response.projects;
-                                    window.mastersData = response.masters;
+                                    // window.mastersData = response.masters;
                                     // Guardamos el valor actual del filtro
                                     const currentFilterproject = table.search();
                                     // Re-renderizamos la tabla
@@ -1764,11 +1764,11 @@ $(document).ready(function() {
                     if(response.success){
                             // Actualizamos la variable global con los nuevos datos
                             window.subprojectsData = response.subprojects;
-                            window.mastersData = response.masters;
+                            window.projectsData = response.projects;
                             // Guardamos el valor actual del filtro
                             const currentFilter = tableSubprojects.search();
                             // Re-renderizamos la tabla
-                            renderSubprojectsTable(window.subprojectsData, window.mastersData);
+                            renderSubprojectsTable(window.subprojectsData,master.fk_project_id);
                             // Restauramos el filtro anterior
                             tableSubprojects.search(currentFilter).draw();
                             //Cambiar el titulo del modal
@@ -2066,12 +2066,11 @@ $(document).ready(function() {
         $('#inputnewsubprojectcfshbl').prop('readonly', false); // Deshabilitar el input
     }
 
-    function renderSubprojectsTable(subprojectsData, mastersData) {
+    function renderSubprojectsTable(subprojectsData, pkproject) {
         tableSubprojects.clear();
         subprojectsData.forEach(sub => {
 
-            const master = mastersData.find(master => master.mbl === sub.fk_mbl);
-            const fkProjectId = master ? master.fk_project_id : null;
+            const fkProjectId = pkproject;
 
             const cfscommentvalue = sub.cfscomment_relation?.gntc_value || sub.cfscomment_relation?.gntc_description || '';
             let cfscomment = '';
@@ -2559,7 +2558,7 @@ $(document).ready(function() {
                 }).then(() =>{
                     // Actualizamos la variable global con los nuevos datos
                     window.projectsData = response.projects;
-                    window.mastersData = response.masters;
+                    //window.mastersData = response.masters;
                     // Guardamos el valor actual del filtro
                     const currentFilterproject = table.search();
                     // Re-renderizamos la tabla
@@ -2571,7 +2570,7 @@ $(document).ready(function() {
                     // Guardamos el valor actual del filtro
                     const currentFilter = tableSubprojects.search();
                     // Re-renderizamos la tabla
-                    renderSubprojectsTable(window.subprojectsData, window.mastersData);
+                    renderSubprojectsTable(window.subprojectsData,  response.pkproject);
                     // Restauramos el filtro anterior
                     tableSubprojects.search(currentFilter).draw();
                     $('#newcfssubproject').modal('hide');
@@ -2627,8 +2626,10 @@ $(document).ready(function() {
         const mastermbl = $(this).data('mastermbl');
         const projectid = $(this).data('project');
 
-        // Buscar el master primero
-        const master = window.mastersData.find(m => m.mbl == mastermbl);
+        // Buscar el proyecto primero
+        const project = window.projectsData.find(p => p.project_id == projectid);
+        // Luego, buscar el master dentro de ese proyecto
+        const master = project?.masters?.find(m => m.mbl == mastermbl);
         // Luego, buscar el subproject dentro de ese master
         const subproject = master?.subprojects?.find(sub => sub.hbl == subprojectid);
 
@@ -2662,7 +2663,7 @@ $(document).ready(function() {
                                 }).then(() =>{
                                     // Actualizamos la variable global con los nuevos datos
                                     window.projectsData = response.projects;
-                                    window.mastersData = response.masters;
+                                    //window.mastersData = response.masters;
                                     // Guardamos el valor actual del filtro
                                     const currentFilterproject = table.search();
                                     // Re-renderizamos la tabla
@@ -2674,7 +2675,7 @@ $(document).ready(function() {
                                     // Guardamos el valor actual del filtro
                                     const currentFilter = tableSubprojects.search();
                                     // Re-renderizamos la tabla
-                                    renderSubprojectsTable(window.subprojectsData, window.mastersData);
+                                    renderSubprojectsTable(window.subprojectsData, master.fk_project_id);
                                     // Restauramos el filtro anterior
                                     tableSubprojects.search(currentFilter).draw();
                                 });
@@ -2709,7 +2710,14 @@ $(document).ready(function() {
         const projectid = $(this).data('project');
 
         // Buscar el master primero
-        const master = window.mastersData.find(m => m.mbl == mastermbl);
+        //const master = window.mastersData.find(m => m.mbl == mastermbl);
+        // Luego, buscar el subproject dentro de ese master
+        //const subproject = master?.subprojects?.find(sub => sub.hbl == subprojectid);
+
+        // Buscar el proyecto primero
+        const project = window.projectsData.find(p => p.project_id == projectid);
+        // Luego, buscar el master dentro de ese proyecto
+        const master = project?.masters?.find(m => m.mbl == mastermbl);
         // Luego, buscar el subproject dentro de ese master
         const subproject = master?.subprojects?.find(sub => sub.hbl == subprojectid);
 
@@ -2986,7 +2994,7 @@ $(document).ready(function() {
                 }).then(() =>{
                     // Actualizamos la variable global con los nuevos datos
                     window.projectsData = response.projects;
-                    window.mastersData = response.masters;
+                    //window.mastersData = response.masters;
                     // Guardamos el valor actual del filtro
                     const currentFilterproject = table.search();
                     // Re-renderizamos la tabla
@@ -2998,7 +3006,7 @@ $(document).ready(function() {
                     // Guardamos el valor actual del filtro
                     const currentFilter = tableSubprojects.search();
                     // Re-renderizamos la tabla
-                    renderSubprojectsTable(window.subprojectsData, window.mastersData);
+                    renderSubprojectsTable(window.subprojectsData, response.pkproject);
                     // Restauramos el filtro anterior
                     tableSubprojects.search(currentFilter).draw();
                     $('#newcfssubproject').modal('hide');
