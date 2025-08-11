@@ -73,7 +73,7 @@ class Subproject extends Model
         });
     }
 
-    
+    //funcion recalcular cantidades si se editan las fechas del master
     public function recalculateStorageAndCharges()
     {
         if (!$this->out_date_cr || !$this->lfd) {
