@@ -50,7 +50,7 @@ class Project extends Model
 
     public function masters()
     {
-        return $this->hasMany(Master::class, 'fk_project_id', 'project_id');
+        return $this->hasMany(Master::class, 'fk_project_id', 'project_id')->where('status', '1');
     }
     public function drayageUserRelation()
     {

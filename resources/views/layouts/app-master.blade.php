@@ -35,10 +35,10 @@
       }
 
       tr.bg-light-blue {
-          --bs-table-bg: rgba(13, 82, 200, 0.08);
+          --bs-table-bg: rgba(30, 110, 255, 0.25);
       }
       tr.bg-light-green {
-          --bs-table-bg: rgba(0, 150, 50, 0.08);
+          --bs-table-bg: rgba(0, 200, 80, 0.25);
       }
       tr.bg-light-blue .list-group-item,
       tr.bg-light-green .list-group-item {

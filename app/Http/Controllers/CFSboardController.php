@@ -19,32 +19,34 @@ class CFSboardController extends Controller
     public function cfsboard(){
         if (Auth::check()) {
             // Obtener todos los proyectos con sus relaciones necesarias
-            $projects = Project::with([
+            $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
+            ->with([
                 'masters' => function ($q) {
-                    $q->where('status', '1')->with([
+                    $q->where('status', '1')
+                    ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
+                    ->with([
                         'subprojects' => function ($q) {
-                            $q->where('status', '1')->with([
-                                'costumer' => function ($q) {
-                                    $q->where('cfs_customer.status', '1');
-                                },
-                                'pns' => function ($q) { // <- Aquí es la clave
-                                    $q->where('cfs_pn.status', '1');
-                                },
-                                'services' => function ($q) {
-                                    $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                },
-                                'hblreferences' => function ($q) { // <- añade esta parte
-                                    $q->where('cfs_hbl_references.status', '1');
-                                },
-                                'cfscommentRelation',
-                                'customreleaseRelation',
+                            $q->where('status', '1')
+                            ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
+                            ->with([
+                                'cfscommentRelation:gnct_id,gntc_value,gntc_description',
+                                'customreleaseRelation:gnct_id,gntc_value,gntc_description',
                             ]);
                         }
                     ]);
                 },
-                'drayageUserRelation',
-                'drayageFileRelation',
-                'invoiceRelation',
+                'drayageUserRelation' => function ($q) {
+                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
+                    ->where('gntc_status', '1');
+                },
+                'drayageFileRelation' => function ($q) {
+                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
+                    ->where('gntc_status', '1');
+                },
+                'invoiceRelation' => function ($q) {
+                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
+                    ->where('gntc_status', '1');
+                },
             ])
             ->where('status', '1')
             ->get();        

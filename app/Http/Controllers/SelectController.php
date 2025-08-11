@@ -16,27 +16,39 @@ class SelectController extends Controller
     //Funcion para rellenar todos los catalogos
     public function getLoadSelects(Request $request){
         if (Auth::check()) {
-            // Obtener los datos donde el campo gntc_group sea 'drayage_user' o 'drayage_filetype'
-            $drayageUserData = GenericCatalogs::where('gntc_group', 'drayage_user')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
-            $drayageFiletypeData = GenericCatalogs::where('gntc_group', 'drayage_file')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
-            $cfsData = GenericCatalogs::where('gntc_group', 'cfs_option')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
-            $customReleaseData = GenericCatalogs::where('gntc_group', 'custom_release')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
-            $invoiceData = GenericCatalogs::where('gntc_group', 'invoice_option')->where('gntc_status', '1')->select('gnct_id', 'gntc_value')->get();
+            // Lista de grupos que necesitamos
+            $groups = [
+                'drayage_user',
+                'drayage_file',
+                'cfs_option',
+                'custom_release',
+                'invoice_option'
+            ];
+
+            // Traemos todos los registros de esos grupos en una sola consulta
+            $genericCatalogs = GenericCatalogs::whereIn('gntc_group', $groups)
+                ->where('gntc_status', '1')
+                ->select('gnct_id', 'gntc_value', 'gntc_group')
+                ->get()
+                ->groupBy(function ($item) {
+                    return strtolower($item->gntc_group);
+                });
+
             $customersData = Costumer::where('status', '1')->select('pk_customer', 'description')->get();
             $partNumberData = Pn::where('status', '1')->select('pk_part_number', 'description')->get();
             $serviceData = Service::where('status', '1')->select('pk_service', 'description', 'cost')->get();
 
             // Devolver los datos en formato JSON
             return response()->json([
-                'drayage_user' => $drayageUserData,
-                'drayage_filetype' => $drayageFiletypeData,
-                'customers' => $customersData,
-                'part_number' => $partNumberData,
-                'invoice' => $invoiceData,
-                'cfs' => $cfsData,
-                'custom_release' => $customReleaseData,
-                'services' => $serviceData,
-            ]);
+                    'drayage_user'   => $genericCatalogs->get('drayage_user', collect()),
+                    'drayage_filetype' => $genericCatalogs->get('drayage_file', collect()),
+                    'cfs'            => $genericCatalogs->get('cfs_option', collect()),
+                    'custom_release' => $genericCatalogs->get('custom_release', collect()),
+                    'invoice'        => $genericCatalogs->get('invoice_option', collect()),
+                    'customers'      => $customersData,
+                    'part_number'    => $partNumberData,
+                    'services'       => $serviceData,
+                ]);
         }
         return redirect('/login');
     }

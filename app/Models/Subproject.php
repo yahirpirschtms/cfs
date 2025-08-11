@@ -73,6 +73,38 @@ class Subproject extends Model
         });
     }
 
+    //funcion recalcular cantidades si se editan las fechas del master
+    public function recalculateStorageAndCharges()
+    {
+        if (!$this->out_date_cr || !$this->lfd) {
+            return;
+        }
+
+        // Calcula los días después del LFD; si es negativo, pon 0
+        $days = Carbon::parse($this->lfd)->diffInDays(Carbon::parse($this->out_date_cr), false);
+        $this->days_after_lfd = $days > 0 ? $days : 0;
+
+        // Buscar el servicio "STORAGE"
+        $storageService = Service::where('description', 'STORAGE')
+            ->where('status', '1')
+            ->first();
+
+        $storageCost = $storageService ? $storageService->cost : 0;
+
+        // Calcular el cargo de almacenamiento
+        $this->wh_storage_charge = round($this->days_after_lfd * $this->cuft * $storageCost, 2);
+
+        // Calcular cargos totales
+        $this->charges = round(
+            $this->wh_storage_charge +
+            $this->services_charge +
+            $this->delivery_charges,
+            2
+        );
+
+        $this->save();
+    }
+
     protected $appends = ['arrival_date_full', 'lfd_full', 'out_date_cr_full'];
 
     // Formateo de fechas tipo datetime
