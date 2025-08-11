@@ -49,7 +49,7 @@ class CFSboardController extends Controller
                 },
             ])
             ->where('status', '1')
-            ->get();      
+            ->get();        
 
             return view('home.cfsboard', compact('projects'));  // Pasamos los proyectos a la vista
         }
