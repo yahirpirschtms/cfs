@@ -15,764 +15,309 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Repositories\CFSboardRepository;
 
 class MasterController extends Controller
 {
-    //Funcion para obtener los masters del project
-    public function getProjectMasters(Request $request){
-        if (Auth::check()) {
-            // Validar que el project_id esté presente
-            $request->validate([
-                'project_id' => 'required|string',
-            ]);
+    protected $repo;
 
-            // Obtener el proyecto por el ID
-            $project = Project::find($request->project_id);
-
-            if ($project) {
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->project_id)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Masters successfully founded.',
-                    'masters' => $masters,
-                ]);
-            } else {
-                // Si no se encuentra el proyecto, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
-            }
-        }
-        return redirect('/login');
+    public function __construct(CFSboardRepository $repo)
+    {
+        $this->repo = $repo;
     }
-
-    //Funcion añadir nuevos masters
-    /*public function saveNewMaster(Request $request){
-        if(Auth::check()) {
-            $validated = $request->validate([
-                'inputnewmastercfsmbl' => 'required|unique:cfs_master,mbl',
-                'inputnewmastercfsetaport' => 'required|date',
-                'inputnewmastercfsarrivaldate' => 'required|date',
-                'inputnewmastercfslfd' => 'required|date',
-                'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'nullable',
-                'inputnewmastercfsproyectid' => 'required',
-                
-            ],[
-                'inputnewmastercfsmbl.unique' => 'MBL already exists.',
-                'inputnewmastercfsmbl.required' => 'MBL is required.',
-                'inputnewmastercfsetaport.required' => 'ETA Port is required.',
-                'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
-                'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
-                'inputnewmastercfslfd.required' => 'LFD is required.',
-                'inputnewmastercfslfd.date' => 'LFD must be a date.',
-                'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
-                'inputnewmastercfsnotes.required' => 'Notes is required.',
-                'inputnewmastercfsproyectid.required' => 'Project ID is required.',
-            ]);
-
-            $etaport = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
-
-
-            // Obtener el proyecto por el ID
-            $project = Project::find($request->inputnewmastercfsproyectid);
-
-            if ($project) {
-                Master::create([
-                    'mbl' => $request->inputnewmastercfsmbl,
-                    'fk_project_id' => $request->inputnewmastercfsproyectid,
-                    'container_number' => $request->inputnewmastercfscontainernumber,
-                    'notes' => $request->inputnewmastercfsnotes,
-                    'eta_port' => $etaport,
-                    'arrival_date' => $arrivaldate,
-                    'lfd' => $lfd,
-                    'created_by'=> Auth::check() ? Auth::user()->username : 'system',
-                    'created_date' => now(),
-                    'status' => '1',
-                ]);
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->inputnewmastercfsproyectid)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();  
-
-                // Responder con éxito y devolver todos los proyectos con sus relaciones
-                return response()->json([
-                    'message' => 'Master successfully added.',
-                    //'masters' => $masters, // Devolver todos los proyectos con sus relaciones
-                    'projects' => $projects,
-                ], 200);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
-            }
-        }
-        return redirect('/login');
-    }*/
 
     //Funcion añadir nuevos masters mas rapida
     public function saveNewMaster(Request $request){
-        if(Auth::check()) {
-            $validated = $request->validate([
-                'inputnewmastercfsmbl' => 'required|unique:cfs_master,mbl',
-                'inputnewmastercfsetaport' => 'required|date',
-                'inputnewmastercfsarrivaldate' => 'required|date',
-                'inputnewmastercfslfd' => 'required|date',
-                'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'nullable',
-                'inputnewmastercfsproyectid' => 'required',
-                
-            ],[
-                'inputnewmastercfsmbl.unique' => 'MBL already exists.',
-                'inputnewmastercfsmbl.required' => 'MBL is required.',
-                'inputnewmastercfsetaport.required' => 'ETA Port is required.',
-                'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
-                'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
-                'inputnewmastercfslfd.required' => 'LFD is required.',
-                'inputnewmastercfslfd.date' => 'LFD must be a date.',
-                'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
-                'inputnewmastercfsnotes.required' => 'Notes is required.',
-                'inputnewmastercfsproyectid.required' => 'Project ID is required.',
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        // Validación de datos
+        $validated = $request->validate([
+            'inputnewmastercfsmbl' => 'required',
+            'inputnewmastercfsetaport' => 'required|date',
+            'inputnewmastercfsarrivaldate' => 'required|date',
+            'inputnewmastercfslfd' => 'required|date',
+            'inputnewmastercfscontainernumber' => 'required',
+            'inputnewmastercfsnotes' => 'nullable',
+            'inputnewmastercfsproyectid' => 'required|exists:cfs_project,project_id',
+        ], [
+            'inputnewmastercfsmbl.unique' => 'MBL already exists.',
+            'inputnewmastercfsmbl.required' => 'MBL is required.',
+            'inputnewmastercfsetaport.required' => 'ETA Port is required.',
+            'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
+            'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
+            'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
+            'inputnewmastercfslfd.required' => 'LFD is required.',
+            'inputnewmastercfslfd.date' => 'LFD must be a date.',
+            'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
+            'inputnewmastercfsproyectid.required' => 'Project ID is required.',
+            'inputnewmastercfsproyectid.exists' => 'Project not found.',
+        ]);
+
+        // Convertir fechas
+        $etaport     = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
+        $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
+        $lfd         = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
+
+        DB::beginTransaction();
+        try {
+            // Insertar nuevo master
+            DB::table('cfs_master')->insert([
+                'mbl'             => $request->inputnewmastercfsmbl,
+                'fk_project_id'   => $request->inputnewmastercfsproyectid,
+                'container_number'=> $request->inputnewmastercfscontainernumber,
+                'notes'           => $request->inputnewmastercfsnotes,
+                'eta_port'        => $etaport,
+                'arrival_date'    => $arrivaldate,
+                'lfd'             => $lfd,
+                'created_by'      => Auth::user()->username ?? 'system',
+                'created_date'    => now(),
+                'status'          => '1',
             ]);
 
-            $etaport = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
+            // Re-obtener todos los proyectos con masters y subprojects
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
 
+            DB::commit();
 
-            // Obtener el proyecto por el ID
-            $project = Project::where('project_id', $request->inputnewmastercfsproyectid)->exists();
+            return response()->json([
+                'message'  => 'Master successfully added.',
+                'projects' => $projects,
+            ], 200);
 
-            if ($project) {
-                Master::create([
-                    'mbl' => $request->inputnewmastercfsmbl,
-                    'fk_project_id' => $request->inputnewmastercfsproyectid,
-                    'container_number' => $request->inputnewmastercfscontainernumber,
-                    'notes' => $request->inputnewmastercfsnotes,
-                    'eta_port' => $etaport,
-                    'arrival_date' => $arrivaldate,
-                    'lfd' => $lfd,
-                    'created_by'=> Auth::check() ? Auth::user()->username : 'system',
-                    'created_date' => now(),
-                    'status' => '1',
-                ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
 
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();  
-
-                // Responder con éxito y devolver todos los proyectos con sus relaciones
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'Duplicate entry')) {
                 return response()->json([
-                    'message' => 'Master successfully added.',
-                    'projects' => $projects,
-                ], 200);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
+                    'message' => 'MBL already exists.'
+                ], 422);
             }
+
+            \Log::error('Error saving master: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error adding master: ' . $e->getMessage()
+            ], 500);
         }
-        return redirect('/login');
     }
 
-    //Funcion para editar un master
-    /*public function editNewMaster(Request $request){
-        if (Auth::check()) {
-            $originalId = $request->input('inputnewmastercfsmbloriginal');
+    //Funcion editar masters mas rapida
+    public function editNewMaster(Request $request){
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
 
-            $validated = $request->validate([
-                'inputnewmastercfsmbl' => [
-                    'required',
-                    Rule::unique('cfs_master', 'mbl')->ignore($originalId, 'mbl')
-                ],
-                'inputnewmastercfsetaport' => 'required|date',
-                'inputnewmastercfsarrivaldate' => 'required|date',
-                'inputnewmastercfslfd' => 'required|date',
-                'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'nullable',
-                'inputnewmastercfsproyectid' => 'required',
-                
-            ],[
-                'inputnewmastercfsmbl.required' => 'MBL is required.',
-                'inputnewmastercfsmbl.unique' => 'MBL already exists.',
-                'inputnewmastercfsetaport.required' => 'ETA Port is required.',
-                'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
-                'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
-                'inputnewmastercfslfd.required' => 'LFD is required.',
-                'inputnewmastercfslfd.date' => 'LFD must be a date.',
-                'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
-                'inputnewmastercfsnotes.required' => 'Notes is required.',
-                'inputnewmastercfsproyectid.required' => 'Project ID is required.',
-            ]);
+        $originalId = $request->input('inputnewmastercfsmbloriginal');
 
-            $etaport = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
+        // Validación
+        $validated = $request->validate([
+            'inputnewmastercfsmbl' => [
+                'required',
+                Rule::unique('cfs_master', 'mbl')->ignore($originalId, 'mbl')
+            ],
+            'inputnewmastercfsetaport' => 'required|date',
+            'inputnewmastercfsarrivaldate' => 'required|date',
+            'inputnewmastercfslfd' => 'required|date',
+            'inputnewmastercfscontainernumber' => 'required',
+            'inputnewmastercfsnotes' => 'nullable',
+            'inputnewmastercfsproyectid' => 'required|exists:cfs_project,project_id',
+        ], [
+            'inputnewmastercfsmbl.required' => 'MBL is required.',
+            'inputnewmastercfsmbl.unique' => 'MBL already exists.',
+            'inputnewmastercfsetaport.required' => 'ETA Port is required.',
+            'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
+            'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
+            'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
+            'inputnewmastercfslfd.required' => 'LFD is required.',
+            'inputnewmastercfslfd.date' => 'LFD must be a date.',
+            'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
+            'inputnewmastercfsproyectid.required' => 'Project ID is required.',
+            'inputnewmastercfsproyectid.exists' => 'Project ID not found.',
+        ]);
 
-            // Obtener el proyecto por el ID
-            $masters = Master::find($originalId);
+        // Conversión de fechas
+        $etaport     = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
+        $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
+        $lfd         = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
+        $newMasterMBL = $request->inputnewmastercfsmbl;
+        $username    = Auth::user()->username ?? 'system';
 
-            if ($masters) {
-                // Guardamos el MBL original antes del cambio
-                $oldMasterMBL = $masters->mbl;
-                $newMasterMBL = $request->inputnewmastercfsmbl;
+        DB::beginTransaction();
+        try {
+            // Obtener datos actuales del master
+            $master = DB::table('cfs_master')
+                ->select('mbl', 'arrival_date', 'lfd')
+                ->where('mbl', $originalId)
+                ->first();
 
-                // Actualizar el project
-                $masters->mbl = $newMasterMBL;
-                $masters->notes = $request->inputnewmastercfsnotes;
-                $masters->container_number = $request->inputnewmastercfscontainernumber;
-                $masters->eta_port = $etaport;
-                $masters->arrival_date = $arrivaldate;
-                $masters->lfd = $lfd;
-                $masters->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $masters->transaction_date = now();
-                $masters->save();
+            if (!$master) {
+                throw new \Exception('Master not found.');
+            }
 
-                // Si el MBL cambió, actualizamos los subprojects relacionados
-                if ($oldMasterMBL !== $newMasterMBL) {
-                    DB::table('cfs_subprojects')
-                        ->where('fk_mbl', $oldMasterMBL)
-                        ->where('status', 1) // condición adicional
-                        ->update(['fk_mbl' => $newMasterMBL]);
-                }
+            $oldMasterMBL     = $master->mbl;
+            $oldMasterArrival = $master->arrival_date;
+            $oldMasterLFD     = $master->lfd;
 
-                // Actualizar todos los subprojects relacionados
+            // Actualizar master
+            $affected = DB::table('cfs_master')
+                ->where('mbl', $originalId)
+                ->update([
+                    'mbl'             => $newMasterMBL,
+                    'fk_project_id'   => $request->inputnewmastercfsproyectid,
+                    'notes'           => $request->inputnewmastercfsnotes,
+                    'container_number'=> $request->inputnewmastercfscontainernumber,
+                    'eta_port'        => $etaport,
+                    'arrival_date'    => $arrivaldate,
+                    'lfd'             => $lfd,
+                    'updated_by'      => $username,
+                    'transaction_date'=> now(),
+                ]);
+
+            if ($affected === 0) {
+                throw new \Exception('Master not found or no changes applied.');
+            }
+
+            // Si cambia el MBL, actualizar subprojects relacionados
+            if ($oldMasterMBL !== $newMasterMBL) {
+                DB::table('cfs_subprojects')
+                    ->where('fk_mbl', $oldMasterMBL)
+                    ->where('status', 1)
+                    ->update(['fk_mbl' => $newMasterMBL]);
+            }
+
+            // Si cambia ArrivalDate o LFD, actualizar todos los subprojects relacionados
+            if (
+                !Carbon::parse($oldMasterArrival)->equalTo(Carbon::parse($arrivaldate)) ||
+                !Carbon::parse($oldMasterLFD)->equalTo(Carbon::parse($lfd))
+            ) {
                 $subprojects = Subproject::where('fk_mbl', $newMasterMBL)
-                    ->where('status', '1')
-                    ->get();
+                ->where('status', 1)
+                ->get();
 
                 foreach ($subprojects as $sub) {
                     $sub->arrival_date = $arrivaldate;
                     $sub->lfd = $lfd;
                     $sub->save();
 
-                    // Recalcular cargos automáticamente
+                    // Ahora sí puedes llamar al método del modelo
                     $sub->recalculateStorageAndCharges();
                 }
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->inputnewmastercfsproyectid)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();;
-
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y devolver todos los master con sus relaciones
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Master successfully updated.',
-                    'masters' => $masters, // Devolver todos los proyectos con sus relaciones
-                    'projects' => $projects,
-                ], 200);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
             }
-        }
-        return redirect('/login');
-    }*/
 
-    //Funcion para editar un master mas rapida
-    public function editNewMaster(Request $request){
-        if (Auth::check()) {
-            $originalId = $request->input('inputnewmastercfsmbloriginal');
+            // Recargar proyectos con masters y subprojects
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
 
-            $validated = $request->validate([
-                'inputnewmastercfsmbl' => [
-                    'required',
-                    Rule::unique('cfs_master', 'mbl')->ignore($originalId, 'mbl')
-                ],
-                'inputnewmastercfsetaport' => 'required|date',
-                'inputnewmastercfsarrivaldate' => 'required|date',
-                'inputnewmastercfslfd' => 'required|date',
-                'inputnewmastercfscontainernumber' => 'required',
-                'inputnewmastercfsnotes' => 'nullable',
-                'inputnewmastercfsproyectid' => 'required',
-                
-            ],[
-                'inputnewmastercfsmbl.required' => 'MBL is required.',
-                'inputnewmastercfsmbl.unique' => 'MBL already exists.',
-                'inputnewmastercfsetaport.required' => 'ETA Port is required.',
-                'inputnewmastercfsetaport.date' => 'ETA Port must be a date.',
-                'inputnewmastercfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewmastercfsarrivaldate.date' => 'Arrival Date must be a date.',
-                'inputnewmastercfslfd.required' => 'LFD is required.',
-                'inputnewmastercfslfd.date' => 'LFD must be a date.',
-                'inputnewmastercfscontainernumber.required' => 'Container Number is required.',
-                'inputnewmastercfsnotes.required' => 'Notes is required.',
-                'inputnewmastercfsproyectid.required' => 'Project ID is required.',
-            ]);
+            DB::commit();
 
-            $etaport = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsetaport)->format('Y-m-d H:i:s');
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewmastercfslfd)->format('Y-m-d H:i:s');
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Master successfully updated.',
+                'projects' => $projects,
+            ], 200);
 
-            // Obtener el proyecto por el ID
-            $masters = Master::select('mbl', 'arrival_date', 'lfd')->where('mbl', $originalId)->first();
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
 
-            if ($masters) {
-                // Guardamos el MBL original antes del cambio
-                $oldMasterMBL = $masters->mbl;
-                $newMasterMBL = $request->inputnewmastercfsmbl;
-                $oldMasterArrival = $masters->getRawOriginal('arrival_date');
-                $oldMasterLFD = $masters->getRawOriginal('lfd');
-
-                // Actualizar el project
-                Master::where('mbl', $originalId)->update([
-                    'mbl' => $newMasterMBL,
-                    'notes' => $request->inputnewmastercfsnotes,
-                    'container_number' => $request->inputnewmastercfscontainernumber,
-                    'eta_port' => $etaport,
-                    'arrival_date' => $arrivaldate,
-                    'lfd' => $lfd,
-                    'updated_by' => Auth::user()->username ?? 'system',
-                    'transaction_date' => now(),
-                ]);
-
-                // Si el MBL cambió, actualizamos los subprojects relacionados
-                if ($oldMasterMBL !== $newMasterMBL) {
-                    DB::table('cfs_subprojects')
-                        ->where('fk_mbl', $oldMasterMBL)
-                        ->where('status', 1) // condición adicional
-                        ->update(['fk_mbl' => $newMasterMBL]);
-                }
-
-                if (
-                    !Carbon::parse($oldMasterArrival)->equalTo(Carbon::parse($arrivaldate)) ||
-                    !Carbon::parse($oldMasterLFD)->equalTo(Carbon::parse($lfd))
-                ) {
-                    // Actualizar todos los subprojects relacionados
-                    $subprojects = Subproject::where('fk_mbl', $newMasterMBL)
-                        ->where('status', '1')
-                        ->get();
-
-                    foreach ($subprojects as $sub) {
-                        $sub->arrival_date = $arrivaldate;
-                        $sub->lfd = $lfd;
-                        $sub->save();
-
-                        // Recalcular cargos automáticamente
-                        $sub->recalculateStorageAndCharges();
-                    }
-                }
-
-
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();  
-
-                // Responder con éxito y devolver todos los master con sus relaciones
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Master successfully updated.',
-                    'projects' => $projects,
-                ], 200);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'Duplicate entry')) {
+                return response()->json(['message' => 'MBL already exists.'], 422);
             }
+
+            Log::error('Error updating master: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error updating master: ' . $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 404);
         }
-        return redirect('/login');
     }
-
-    //Funcion para borrar el master
-    /*public function deleteMaster(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl esté presente
-            $request->validate([
-                'mbl' => 'required|string',
-                'project_id' => 'required|string',
-            ]);
-
-            // Obtener el Master por el ID
-            //$master = Master::find($request->mbl);
-            $master = Master::with(['subprojects.hblreferences','subprojects.pns'])->find($request->mbl);
-
-            if ($master) {
-                // Actualizar el estado del master a 0
-                $master->status = 0;
-                $master->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $master->transaction_date = now();
-                $master->save();
-
-                // Procesar subprojects relacionados
-                foreach ($master->subprojects as $subproject) {
-                    // Cambiar status del subproject
-                    $subproject->status = 0;
-                    $subproject->updated_by = Auth::user()->username;
-                    $subproject->transaction_date = now();
-                    $subproject->save();
-
-                    // Eliminar HBL references
-                    foreach ($subproject->hblreferences as $hbl) {
-                        $hbl->delete();
-                    }
-
-                    // Desactivar part numbers (pns)
-                    DB::table('cfs_h_pn')
-                    ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
-                    ->update([
-                        'status' => 0,
-                        'updated_by' => Auth::user()->username,
-                        'transaction_date' => now(),
-                    ]);
-                }
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->project_id)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-                
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y los masters actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Master deleted successfully.',
-                    'masters' => $masters,
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
-            }
-        }
-        return redirect('/login');
-    }*/
 
     //Funcion para borrar el master mas rapida
     public function deleteMaster(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl esté presente
-            $request->validate([
-                'mbl' => 'required|string',
-                'project_id' => 'required|string',
-            ]);
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
 
-            // Obtener el Master por el ID
-            $master = Master::select('mbl', 'status', 'updated_by', 'transaction_date') // columnas del master
-                ->with([
-                        'subprojects' => function ($q) {
-                            $q->select('hbl', 'fk_mbl', 'status', 'updated_by', 'transaction_date')
-                                ->with([
-                                    'hblreferences:pk_hbl_reference,fk_hbl', // solo ID y la clave foránea
-                                    'pns:pk_part_number'            // igual aquí
-                                ]);
-                        }
-                ])
-            ->find($request->mbl);
+        $request->validate([
+            'mbl' => 'required|string',
+            'project_id' => 'required|string',
+        ]);
 
-            if ($master) {
-                // Actualizar el estado del master a 0
-                $master->status = 0;
-                $master->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $master->transaction_date = now();
-                $master->save();
+        DB::beginTransaction();
+        try {
+            $username = Auth::user()->username ?? 'system';
+            $now = now();
 
-                // Procesar subprojects relacionados
-                foreach ($master->subprojects as $subproject) {
-                    // Cambiar status del subproject
-                    $subproject->status = 0;
-                    $subproject->updated_by = Auth::user()->username;
-                    $subproject->transaction_date = now();
-                    $subproject->save();
+            // Desactivar master
+            $affected = DB::table('cfs_master')
+                ->where('mbl', $request->mbl)
+                ->where('status', 1)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
 
-                    // Eliminar HBL references
-                    foreach ($subproject->hblreferences as $hbl) {
-                        $hbl->delete();
-                    }
+            if ($affected === 0) {
+                throw new \Exception('Master not found or already deleted.');
+            }
 
-                    // Desactivar part numbers (pns)
-                    DB::table('cfs_h_pn')
-                    ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
+            // Obtener todos los HBL de los subprojects relacionados
+            $subprojectsHBL = DB::table('cfs_subprojects')
+                ->where('fk_mbl', $request->mbl)
+                ->pluck('hbl');
+
+            if ($subprojectsHBL->isNotEmpty()) {
+                // Desactivar subprojects
+                DB::table('cfs_subprojects')
+                    ->whereIn('hbl', $subprojectsHBL)
                     ->update([
                         'status' => 0,
-                        'updated_by' => Auth::user()->username,
-                        'transaction_date' => now(),
+                        'updated_by' => $username,
+                        'transaction_date' => $now,
                     ]);
-                }
 
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();  
+                // Eliminar HBL references
+                DB::table('cfs_hbl_references')
+                    ->whereIn('fk_hbl', $subprojectsHBL)
+                    ->delete();
 
-                // Responder con éxito y los masters actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Master deleted successfully.',
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
+                // Desactivar part numbers
+                DB::table('cfs_h_pn')
+                    ->whereIn('fk_hbl', $subprojectsHBL)
+                    ->update([
+                        'status' => 0,
+                        'updated_by' => $username,
+                        'transaction_date' => $now,
+                    ]);
             }
+
+            DB::commit();
+
+            // Cargar proyectos actualizados
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Master deleted successfully.',
+                'projects' => $projects,
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Error deleting master: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting master: '.$e->getMessage(),
+            ], 500);
         }
-        return redirect('/login');
     }
+
 }

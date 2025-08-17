@@ -14,401 +14,221 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Repositories\CFSboardRepository;
 
 class ProjectController extends Controller
 {
-    //Funcion para guardar un nuevo project
+    protected $repo;
+
+    public function __construct(CFSboardRepository $repo)
+    {
+        $this->repo = $repo;
+    }
+
+    //Funcion para guardar un nuevo project mas rapido
     public function saveNewProject(Request $request){
-        if (Auth::check()) {
-            $validated = $request->validate([
-                'inputnewcfsprojectprojectid' => 'required|unique:cfs_project,project_id',
-                'inputnewcfsprojectmonth' => 'required|date',
-                'inputnewcfsprojectinvoice' => 'required',
-                'inputnewcfspeojectdrayageperson' => 'required',
-                'inputnewcfsprojectdrayagefiletype' => 'required',
-            ],[
-                'inputnewcfsprojectprojectid.required' => 'Project ID is required.',
-                'inputnewcfsprojectprojectid.unique' => 'Project ID already exists.',
-                'inputnewcfsprojectmonth.required' => 'Month is required.',
-                'inputnewcfsprojectmonth.date' => 'Month must be a date.',
-                'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
-                'inputnewcfspeojectdrayageperson.required' => 'Drayage Person is required.',
-                'inputnewcfsprojectdrayagefiletype.required' => 'Drayage File Type is required.',
-            ]);
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
 
-            $month = Carbon::createFromFormat('m/d/Y', $request->inputnewcfsprojectmonth)->format('Y-m-d'); // Solo fecha
+        // Validación de datos
+        $validated = $request->validate([
+            'inputnewcfsprojectprojectid' => 'required',
+            'inputnewcfsprojectmonth' => 'required|date',
+            'inputnewcfsprojectinvoice' => 'required',
+            'inputnewcfspeojectdrayageperson' => 'required',
+            'inputnewcfsprojectdrayagefiletype' => 'required',
+        ], [
+            'inputnewcfsprojectprojectid.required' => 'Project ID is required.',
+            'inputnewcfsprojectprojectid.unique' => 'Project ID already exists.',
+            'inputnewcfsprojectmonth.required' => 'Month is required.',
+            'inputnewcfsprojectmonth.date' => 'Month must be a date.',
+            'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
+            'inputnewcfspeojectdrayageperson.required' => 'Drayage Person is required.',
+            'inputnewcfsprojectdrayagefiletype.required' => 'Drayage File Type is required.',
+        ]);
 
-            Project::create([
+        $month = Carbon::createFromFormat('m/d/Y', $request->inputnewcfsprojectmonth)->format('Y-m-d');
+
+        // Iniciar transacción
+        DB::beginTransaction();
+        try {
+            // Insertar nuevo proyecto
+            DB::table('cfs_project')->insert([
                 'project_id' => $request->inputnewcfsprojectprojectid,
                 'month' => $month,
                 'invoice' => $request->inputnewcfsprojectinvoice,
                 'drayage_user' => $request->inputnewcfspeojectdrayageperson,
                 'drayage_typefile' => $request->inputnewcfsprojectdrayagefiletype,
-                'created_by'=> Auth::check() ? Auth::user()->username : 'system',
+                'created_by' => Auth::user()->username ?? 'system',
                 'created_date' => now(),
                 'status' => '1',
             ]);
 
-            // Obtener todos los proyectos con sus relaciones necesarias
-            $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-            ->with([
-                'masters' => function ($q) {
-                    $q->where('status', '1')
-                    ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                    ->with([
-                        'subprojects' => function ($q) {
-                            $q->where('status', '1')
-                            ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                            ->with([
-                                'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                            ]);
-                        }
-                    ]);
-                },
-                'drayageUserRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                    ->where('gntc_status', '1');
-                },
-                'drayageFileRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                    ->where('gntc_status', '1');
-                },
-                'invoiceRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                    ->where('gntc_status', '1');
-                },
-            ])
-            ->where('status', '1')
-            ->get();     
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
 
-            // Responder con éxito y devolver todos los proyectos con sus relaciones
+            DB::commit();
+
+            // Responder con éxito
             return response()->json([
                 'message' => 'Project successfully added.',
-                'projects' => $projects, // Devolver todos los proyectos con sus relaciones
+                'projects' => $projects,
             ], 200);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+
+            // Detectar error de clave duplicada MySQL (SQLSTATE 23000 y error code 1062)
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'Duplicate entry')) {
+                return response()->json([
+                    'message' => 'Project ID already exists.'
+                ], 422);
+            }
+
+            Log::error('Error saving project: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error adding project: ' . $e->getMessage()
+            ], 500);
         }
-        return redirect('/login');
     }
 
-    //Funcion para borrar el project
+    //Delete con prodimientos almacenados
     /*public function deleteProject(Request $request){
-        if (Auth::check()) {
-            // Validar que el project_id esté presente
-            $request->validate([
-                'project_id' => 'required|string',
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        $request->validate([
+            'project_id' => 'required|string',
+        ]);
+
+        try {
+            $username = Auth::user()->username ?? 'system';
+
+            // 👇 Llamar directamente al procedimiento
+            DB::statement('CALL delete_project(?, ?)', [
+                $request->project_id,
+                $username
             ]);
 
-            // Obtener el proyecto por el ID
-            //$project = Project::find($request->project_id);
-            $project = Project::with(['masters.subprojects.hblreferences', 'masters.subprojects.pns'])->find($request->project_id);
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
 
-            if ($project) {
-                // Actualizar el estado del proyecto a 0
-                $project->status = 0;
-                $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $project->transaction_date = now();
-                $project->save();
-
-                // Desactivar masters relacionados
-                foreach ($project->masters as $master) {
-                    $master->status = 0;
-                    $master->updated_by = Auth::user()->username;
-                    $master->transaction_date = now();
-                    $master->save();
-
-                    // Desactivar subprojects relacionados
-                    foreach ($master->subprojects as $subproject) {
-                        $subproject->status = 0;
-                        $subproject->updated_by = Auth::user()->username;
-                        $subproject->transaction_date = now();
-                        $subproject->save();
-
-                        // Eliminar hbl_references
-                        foreach ($subproject->hblreferences as $hbl) {
-                            $hbl->delete();
-                        }
-
-                        // Desactivar part numbers (pns)
-                        DB::table('cfs_h_pn')
-                        ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
-                        ->update([
-                            'status' => 0,
-                            'updated_by' => Auth::user()->username,
-                            'transaction_date' => now(),
-                        ]);
-                    }
-                }
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'subprojects_id', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();   
-                
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Project deleted successfully.',
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el proyecto, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Project deleted successfully.',
+                'projects' => $projects,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
-        return redirect('/login');
     }*/
 
-    //Funcion para borrar el project mas rapida
     public function deleteProject(Request $request){
-        if (Auth::check()) {
-            // Validar que el project_id esté presente
-            $request->validate([
-                'project_id' => 'required|string',
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        $request->validate([
+            'project_id' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $username = Auth::user()->username ?? 'system';
+            $now = now();
+
+            // Desactivar proyecto
+            $affected = DB::table('cfs_project')
+                ->where('project_id', $request->project_id)
+                ->where('status', '1')
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            if ($affected === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found or already deleted.'
+                ], 404);
+            }
+
+            // Desactivar masters relacionados
+            DB::table('cfs_master')
+                ->where('fk_project_id', $request->project_id)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            // Desactivar subprojects relacionados
+            $subprojects = DB::table('cfs_subprojects')
+                ->whereIn('fk_mbl', function ($q) use ($request) {
+                    $q->select('mbl')
+                    ->from('cfs_master')
+                    ->where('fk_project_id', $request->project_id);
+                })
+                ->pluck('hbl');
+
+            DB::table('cfs_subprojects')
+                ->whereIn('hbl', $subprojects)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            // Eliminar referencias
+            DB::table('cfs_hbl_references')
+                ->whereIn('fk_hbl', $subprojects)
+                ->delete();
+
+            // Desactivar part numbers
+            DB::table('cfs_h_pn')
+                ->whereIn('fk_hbl', $subprojects)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            DB::commit();
+
+            // 🚀 Ahora ya no armo todo aquí → llamo al repo
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project deleted successfully.',
+                'projects' => $projects,
             ]);
 
-            // Obtener el proyecto por el ID
-            //$project = Project::with(['masters.subprojects.hblreferences', 'masters.subprojects.pns'])->find($request->project_id);
-            $project = Project::select('project_id', 'status', 'updated_by', 'transaction_date') // Solo los campos que usas
-            ->with([
-                'masters' => function ($q) {
-                    $q->select('mbl', 'fk_project_id', 'status', 'updated_by', 'transaction_date')
-                    ->with([
-                        'subprojects' => function ($q) {
-                            $q->select('hbl', 'fk_mbl', 'status', 'updated_by', 'transaction_date')
-                                ->with([
-                                    'hblreferences:pk_hbl_reference,fk_hbl', // solo ID y la clave foránea
-                                    'pns:pk_part_number'            // igual aquí
-                                ]);
-                        }
-                    ]);
-                }
-            ])
-            ->find($request->project_id);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Error deleting project: '.$e->getMessage());
 
-            if ($project) {
-                // Actualizar el estado del proyecto a 0
-                $project->status = 0;
-                $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $project->transaction_date = now();
-                $project->save();
-
-                // Desactivar masters relacionados
-                foreach ($project->masters as $master) {
-                    $master->status = 0;
-                    $master->updated_by = Auth::user()->username;
-                    $master->transaction_date = now();
-                    $master->save();
-
-                    // Desactivar subprojects relacionados
-                    foreach ($master->subprojects as $subproject) {
-                        $subproject->status = 0;
-                        $subproject->updated_by = Auth::user()->username;
-                        $subproject->transaction_date = now();
-                        $subproject->save();
-
-                        // Eliminar hbl_references
-                        foreach ($subproject->hblreferences as $hbl) {
-                            $hbl->delete();
-                        }
-
-                        // Desactivar part numbers (pns)
-                        DB::table('cfs_h_pn')
-                        ->where('fk_hbl', $subproject->hbl) // o la clave foránea que tengas que relacione con el subproject
-                        ->update([
-                            'status' => 0,
-                            'updated_by' => Auth::user()->username,
-                            'transaction_date' => now(),
-                        ]);
-                    }
-                }
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();  
-                
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Project deleted successfully.',
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el proyecto, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting project: '.$e->getMessage(),
+            ], 500);
         }
-        return redirect('/login');
     }
-
-    //Funcion para editar un project
-    /*public function editNewProject(Request $request){
-        if (Auth::check()) {
-            $originalId = $request->input('inputnewcfsprojectprojectidoriginal');
-
-            $validated = $request->validate([
-                //'inputnewcfsprojectprojectid' => 'required|unique:cfs_project,project_id',
-                'inputnewcfsprojectprojectid' => [
-                    'required',
-                    Rule::unique('cfs_project', 'project_id')->ignore($originalId, 'project_id')
-                ],
-                'inputnewcfsprojectmonth' => 'required|date',
-                'inputnewcfsprojectinvoice' => 'required',
-                'inputnewcfspeojectdrayageperson' => 'required',
-                'inputnewcfsprojectdrayagefiletype' => 'required',
-            ],[
-                'inputnewcfsprojectprojectid.required' => 'Project ID is required.',
-                'inputnewcfsprojectprojectid.unique' => 'Project ID already exists.',
-                'inputnewcfsprojectmonth.required' => 'Month is required.',
-                'inputnewcfsprojectmonth.date' => 'Month must be a date.',
-                'inputnewcfsprojectinvoice.required' => 'Invoice is required.',
-                'inputnewcfspeojectdrayageperson.required' => 'Drayage Person is required.',
-                'inputnewcfsprojectdrayagefiletype.required' => 'Drayage File Type is required.',
-            ]);
-
-            $month = Carbon::createFromFormat('m/d/Y', $request->inputnewcfsprojectmonth)->format('Y-m-d'); // Solo fecha
-            
-            // Obtener el proyecto por el ID
-            $project = Project::select('project_id', 'status', 'updated_by', 'transaction_date', 'drayage_user', 'drayage_typefile', 'invoice', 'month')
-            ->find($originalId);
-
-            if ($project) {
-                // Guardamos el project_id original antes del cambio
-                $oldProjectId = $project->project_id;
-                $newProjectId = $request->inputnewcfsprojectprojectid;
-
-                // Actualizar el project
-                $project->project_id = $newProjectId;
-                $project->drayage_user = $request->inputnewcfspeojectdrayageperson;
-                $project->drayage_typefile = $request->inputnewcfsprojectdrayagefiletype;
-                $project->invoice = $request->inputnewcfsprojectinvoice;
-                $project->month = $month;
-                $project->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $project->transaction_date = now();
-                $project->save();
-
-                //Si el project_id cambió, actualizamos los masters relacionados
-                if ($oldProjectId !== $newProjectId) {
-                    DB::table('cfs_master')
-                        ->where('fk_project_id', $oldProjectId)
-                        ->where('status', 1) // condición adicional
-                        ->update(['fk_project_id' => $newProjectId]);
-                //DB::statement("UPDATE cfs_master SET fk_project_id = ? WHERE fk_project_id = ? AND status = 1", [
-                //    $newProjectId, $oldProjectId
-                //]);
-                }
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                ->with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                ->select('hbl', 'fk_mbl', 'cfs_comment','customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                ->with([
-                                    'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                    'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'drayageFileRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                    'invoiceRelation' => function ($q) {
-                        $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                    },
-                ])
-                ->where('status', '1')
-                ->get();     
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Project updated successfully.',
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el proyecto, responder con error
-                return response()->json(['success' => false, 'message' => 'Project not found.']);
-            }
-        }
-        return redirect('/login');
-    }*/
 
     //Funcion para editar un project mas rapida
     public function editNewProject(Request $request){
         if (!Auth::check()) {
             return redirect('/login');
         }
-
         $originalId = $request->input('inputnewcfsprojectprojectidoriginal');
 
+        // Validación
         $validated = $request->validate([
             'inputnewcfsprojectprojectid' => [
                 'required',
@@ -432,72 +252,65 @@ class ProjectController extends Controller
         $newProjectId = $request->inputnewcfsprojectprojectid;
         $username = Auth::user()->username ?? 'system';
 
-        // Verificar existencia rápido
-        $projectExists = Project::where('project_id', $originalId)->exists();
+        DB::beginTransaction();
+        try {
+            // Actualizar proyecto y capturar filas afectadas
+            $affected = DB::table('cfs_project')
+                ->where('project_id', $originalId)
+                ->update([
+                    'project_id' => $newProjectId,
+                    'drayage_user' => $request->inputnewcfspeojectdrayageperson,
+                    'drayage_typefile' => $request->inputnewcfsprojectdrayagefiletype,
+                    'invoice' => $request->inputnewcfsprojectinvoice,
+                    'month' => $month,
+                    'updated_by' => $username,
+                    'transaction_date' => now(),
+                ]);
 
-        if (!$projectExists) {
-            return response()->json(['success' => false, 'message' => 'Project not found.']);
-        }
+            // Si no se actualizó ninguna fila, significa que el proyecto no existe
+            if ($affected === 0) {
+                throw new \Exception('Project not found.');
+            }
 
-        DB::transaction(function () use ($originalId, $newProjectId, $request, $month, $username) {
-            // Actualizar proyecto directo
-            Project::where('project_id', $originalId)->update([
-                'project_id' => $newProjectId,
-                'drayage_user' => $request->inputnewcfspeojectdrayageperson,
-                'drayage_typefile' => $request->inputnewcfsprojectdrayagefiletype,
-                'invoice' => $request->inputnewcfsprojectinvoice,
-                'month' => $month,
-                'updated_by' => $username,
-                'transaction_date' => now(),
-            ]);
-
-            // Actualizar fk_project_id en cfs_master solo si cambió project_id
+            // Actualizar cfs_master si cambia el ID
             if ($originalId !== $newProjectId) {
                 DB::table('cfs_master')
                     ->where('fk_project_id', $originalId)
                     ->where('status', 1)
                     ->update(['fk_project_id' => $newProjectId]);
             }
-        });
 
-        // Cargar todos los proyectos con sus relaciones necesarias
-        $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-            ->with([
-                'masters' => function ($q) {
-                    $q->where('status', '1')
-                        ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                        ->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')
-                                    ->select('hbl', 'fk_mbl', 'cfs_comment', 'customs_release_comment', 'arrival_date', 'lfd', 'out_date_cr')
-                                    ->with([
-                                        'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                        'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                    ]);
-                            }
-                        ]);
-                },
-                'drayageUserRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                },
-                'drayageFileRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                },
-                'invoiceRelation' => function ($q) {
-                    $q->select('gnct_id', 'gntc_value', 'gntc_description')
-                        ->where('gntc_status', '1');
-                },
-            ])
-            ->where('status', '1')
-            ->get();
+            // Cargar todos los proyectos con sus relaciones
+            $projects = $this->repo->getProjectsWithMastersAndSubprojects();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Project updated successfully.',
-            'projects' => $projects,
-        ]);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project updated successfully.',
+                'projects' => $projects
+            ], 200);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+
+            // Duplicado de Project ID
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'Duplicate entry')) {
+                return response()->json(['message' => 'Project ID already exists.'], 422);
+            }
+
+            Log::error('Error updating project: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error updating project: ' . $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 404);
+        }
     }
 
 }
