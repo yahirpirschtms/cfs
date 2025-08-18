@@ -34,6 +34,17 @@
           display: none;
       }
 
+      .showcfssubprojectmodal {
+        border-radius: 10px;    /* ajusta el número para hacerlo más o menos redondeado */
+        border: 1px solid #ccc; /* opcional: para que parezca un botón */
+        --bs-list-group-bg: unset !important; /* Sobrescribe el fondo */
+        background-color: #34b3320c !important;
+      }
+
+      tr.showcfssubprojectmodal {
+        background-color: #34b3320c !important;
+      }
+
       tr.bg-light-blue {
           --bs-table-bg: rgba(30, 110, 255, 0.25);
       }
