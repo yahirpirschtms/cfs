@@ -267,6 +267,7 @@
                                     <th scope="col">LDF</th>
                                     <th scope="col">House</th>
                                     <th scope="col">Options</th>
+                                    <th scope="col">Notes</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -400,7 +401,7 @@
                                                     <div class="invalid-feedback" id="error-inputnewmastercfslfd"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none;">
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
                                                     <label for="inputnewmastercfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewmastercfsnotes" name="inputnewmastercfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewmastercfsnotes"></div>

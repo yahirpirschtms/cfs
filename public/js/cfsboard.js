@@ -211,6 +211,7 @@ $(document).ready(function() {
                 <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => formatDate(m.lfd, 'short')))}</ul></td>
                 <td>${createHouseList(project.masters)}</td>
                 <td><ul class="list-group list-group-flush">${createMasterActions(project.masters)}</ul></td>
+                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m =>m.notes))}</ul></td>
             `;
     
             table.row.add($(rowHTML));
@@ -1615,7 +1616,7 @@ $(document).ready(function() {
                     $('#inputnewmastercfsetaport').val(formatDate(master.eta_port, 'full'));
                     $('#inputnewmastercfsarrivaldate').val(formatDate(master.arrival_date, 'full'));
                     $('#inputnewmastercfslfd').val(formatDate(master.lfd, 'full'));
-                    //$('#inputnewmastercfsnotes').val(master.notes);
+                    $('#inputnewmastercfsnotes').val(master.notes);
 
                     //$('#showcfsmaster').modal('hide');
                     $('#newcfsmaster').modal('show');

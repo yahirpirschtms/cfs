@@ -35,7 +35,8 @@ class CFSboardRepository
                 'm.fk_project_id',
                 'm.eta_port',
                 'm.arrival_date',
-                'm.lfd'
+                'm.lfd',
+                'm.notes'
             )
             ->get()
             ->groupBy('project_id');
@@ -93,6 +94,7 @@ class CFSboardRepository
                     'total_pieces' => $master->total_pieces,
                     'total_pallets' => $master->total_pallets,
                     'eta_port' => $master->eta_port,
+                    'notes' => $master->notes,
                     'arrival_date' => $master->arrival_date,
                     'lfd' => $master->lfd,
                     'subprojects' => $masterSubs
@@ -131,7 +133,8 @@ class CFSboardRepository
                 'm.fk_project_id',
                 'm.eta_port',
                 'm.arrival_date',
-                'm.lfd'
+                'm.lfd',
+                'm.notes'
             )
             ->get()
             ->groupBy('project_id');
@@ -223,6 +226,7 @@ class CFSboardRepository
                     'eta_port' => $master->eta_port,
                     'arrival_date' => $master->arrival_date,
                     'lfd' => $master->lfd,
+                    'notes' => $master->notes,
                     'subprojects' => $masterSubs->values()
                 ];
             }
