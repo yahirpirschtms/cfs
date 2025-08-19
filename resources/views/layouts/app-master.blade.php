@@ -38,7 +38,7 @@
         border-radius: 10px;    /* ajusta el número para hacerlo más o menos redondeado */
         border: 1px solid #ccc; /* opcional: para que parezca un botón */
         --bs-list-group-bg: unset !important; /* Sobrescribe el fondo */
-        background-color: #34b3320c !important;
+        background-color: rgba(200, 240, 130, 0.35) !important;
       }
 
       tr.showcfssubprojectmodal {
