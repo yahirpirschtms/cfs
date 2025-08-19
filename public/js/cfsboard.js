@@ -2299,6 +2299,13 @@ $(document).ready(function() {
                 sub.agent === 'No'
             ) {
                 rowHighlightClass = 'bg-light-green';
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes'
+            ) {
+                rowHighlightClass = 'bg-light-green';
             }else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no' && sub.collected === 'No') {
                 rowHighlightClass = 'bg-light-blue';
             }
