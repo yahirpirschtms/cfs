@@ -37,6 +37,7 @@ class Subproject extends Model
         'delivery_charges',
         'charges',
         'collected',
+        'payed',
         'days_after_lfd',
         'cuft',
         'notes',

@@ -793,6 +793,15 @@
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewsubprojectcfsnotes" name="inputnewsubprojectcfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsnotes"></div>
                                                 </div>
+
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3 d-flex align-items-end" style="font-weight:500">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Yes" id="checkPayed" name="checkPayed">
+                                                        <label class="form-check-label" for="checkPayed">
+                                                            Payed
+                                                        </label>
+                                                    </div>
+                                                </div>
                                             </div>
                                     </form>
                                 </div>

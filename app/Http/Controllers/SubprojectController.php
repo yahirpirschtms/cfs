@@ -81,6 +81,7 @@ class SubprojectController extends Controller
                     'inputnewsubprojectcfscustomer' => 'required',
                     'checkAgent' => 'nullable',
                     'checkCollected' => 'nullable',
+                    'checkPayed' => 'nullable',
                     'inputnewsubprojectcfscfscomment' => 'required',
                     'inputnewsubprojectcfsarrivaldate' => 'required|date',
                     'inputnewsubprojectcfsmagayawhr' => 'nullable',
@@ -136,6 +137,7 @@ class SubprojectController extends Controller
         try {
             $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
             $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
+            $checkPayed = $request->has('checkPayed') ? 'Yes' : 'No';
 
             $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
             $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
@@ -178,6 +180,7 @@ class SubprojectController extends Controller
                 'wh_storage_charge' => $request->inputnewsubprojectcfswhstoragecharges,
                 'delivery_charges' => $request->inputnewsubprojectcfsdeliverycharges,
                 'collected' => $checkCollected,
+                'payed' => $checkPayed,
                 'charges' => $request->inputnewsubprojectcfscharges,
                 'notes' => $request->inputnewsubprojectcfsnotes,
                 'created_by'=> Auth::user()->username ?? 'system',
@@ -352,6 +355,7 @@ class SubprojectController extends Controller
                 'inputnewsubprojectcfscustomer' => 'required',
                 'checkAgent' => 'nullable',
                 'checkCollected' => 'nullable',
+                'checkPayed' => 'nullable',
                 'inputnewsubprojectcfscfscomment' => 'required',
                 'inputnewsubprojectcfsarrivaldate' => 'required|date',
                 'inputnewsubprojectcfsmagayawhr' => 'nullable',
@@ -408,6 +412,7 @@ class SubprojectController extends Controller
             $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
             $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
             $username = Auth::user()->username ?? 'system';
+            $checkPayed = $request->has('checkPayed') ? 'Yes' : 'No';
 
             $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
             $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
@@ -438,6 +443,7 @@ class SubprojectController extends Controller
                     'customer' => $request->inputnewsubprojectcfscustomer,
                     'agent' => $checkAgent,
                     'collected' => $checkCollected,
+                    'payed' => $checkPayed,
                     'cfs_comment' => $request->inputnewsubprojectcfscfscomment,
                     'arrival_date' => $arrivaldate,
                     'whr' => $request->inputnewsubprojectcfsmagayawhr,

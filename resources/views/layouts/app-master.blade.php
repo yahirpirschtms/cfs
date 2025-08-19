@@ -51,8 +51,13 @@
       tr.bg-light-green {
           --bs-table-bg: rgba(0, 200, 80, 0.25);
       }
+      tr.bg-light-yellow {
+          --bs-table-bg: rgba(255, 215, 0, 0.25); /* amarillo dorado con 25% opacidad */
+      }
+      
       tr.bg-light-blue .list-group-item,
-      tr.bg-light-green .list-group-item {
+      tr.bg-light-green .list-group-item,
+      tr.bg-light-yellow .list-group-item {
           background-color: unset !important;
       }
 

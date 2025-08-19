@@ -2195,6 +2195,7 @@ $(document).ready(function() {
 
         $('#checkAgent').prop('checked', false);
         $('#checkCollected').prop('checked', false);
+        $('#checkPayed').prop('checked', false);
 
         //$('#editnewcfsproject').text('Save').attr('id', 'savecfssubproject');
         $('#staticnewcfssubproject').text('New House');
@@ -2275,9 +2276,30 @@ $(document).ready(function() {
             `;
 
             let rowHighlightClass = '';
-            if (sub.collected === 'Yes') {
+
+            if (
+                sub.collected === 'No' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes' &&
+                (sub.charges !== null && Number(sub.charges) !== 0)
+            ) {
+                rowHighlightClass = 'bg-light-yellow';
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'Yes' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes'
+            ) {
                 rowHighlightClass = 'bg-light-green';
-            } else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') {
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'No'
+            ) {
+                rowHighlightClass = 'bg-light-green';
+            }else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no' && sub.collected === 'No') {
                 rowHighlightClass = 'bg-light-blue';
             }
 
@@ -3053,6 +3075,12 @@ $(document).ready(function() {
                         $('#checkCollected').prop('checked', true);
                     } else {
                         $('#checkCollected').prop('checked', false);
+                    }
+
+                    if (subproject.payed === "Yes") {
+                        $('#checkPayed').prop('checked', true);
+                    } else {
+                        $('#checkPayed').prop('checked', false);
                     }
 
                     $('#showcfssubproject').modal('hide');
