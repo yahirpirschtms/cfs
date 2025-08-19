@@ -92,15 +92,33 @@ $(document).ready(function() {
         tableSubprojects.search(this.value).draw(); // Busca en todas las columnas
     });
 
+    // Función para formatear fechas
+    const formatDate = (dateStr, optionsType = 'short') => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const pad = n => n.toString().padStart(2, '0');
+        const monthsShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+        switch (optionsType) {
+            case 'short': // mm/dd/yyyy
+                return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
+            case 'long': // MMM/DD
+                return `${monthsShort[date.getMonth()]}/${pad(date.getDate())}`;
+            case 'full': // mm/dd/yyyy hh:mm:ss
+                return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()} ` +
+                    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+            default:
+                return `${pad(date.getMonth()+1)}/${pad(date.getDate())}/${date.getFullYear()}`;
+        }
+    };
+
     function renderProjectsTableNew(projectsData) {
         table.clear();
     
         projectsData.forEach(project => {
     
             //const invoiceIcon = project.invoice ? 
-            const invoiceIcon = (project.invoice_relation && 
-                (project.invoice_relation.gntc_value === "Yes" || 
-                 project.invoice_relation.gntc_description === "Yes")) ?
+            const invoiceIcon = (project.invoice && project.invoice_desc  === "Yes") ?
                 `<i class="fa-solid fa-circle-check" style="color:rgb(13, 82, 200)"></i> Yes` : 
                 `<i class="text-danger fa-solid fa-circle-xmark"></i> No`;
     
@@ -136,37 +154,35 @@ $(document).ready(function() {
             
                     // Totales
                     const totalSubprojects = subprojects.length;
-                    //const totalCFS = subprojects.filter(sp => sp.cfs_checkbox !== null && sp.cfs_checkbox !== undefined && sp.cfs_checkbox !== '').length;
-                    //const totalCR = subprojects.filter(sp => sp.customs_release_checkbox !== null && sp.customs_release_checkbox !== undefined && sp.customs_release_checkbox !== '').length;
-            
+
                     const totalCFS = subprojects.filter(sp => {
-                        const rel = sp.cfscomment_relation;
-                        return rel && (
-                            (rel.gntc_value && rel.gntc_value.toLowerCase() !== 'no') ||
-                            (rel.gntc_description && rel.gntc_description.toLowerCase() !== 'no')
-                        );
+                        return (sp.cfs_value && sp.cfs_value.toLowerCase() !== 'no')
                     }).length;
             
                     const totalCR = subprojects.filter(sp => {
-                        const rel = sp.customrelease_relation;
-                        return rel && (
-                            (rel.gntc_value && rel.gntc_value.toLowerCase() !== 'no') ||
-                            (rel.gntc_description && rel.gntc_description.toLowerCase() !== 'no')
-                        );
+                        return (sp.cr_value && sp.cr_value.toLowerCase() !== 'no')
                     }).length;
-                    
+
+                    // Lista de subprojects
+                    const subprojectItems = subprojects.map(sp => {
+                        return `
+                                    ${sp.hbl} ${sp.subprojects_id}
+                                `;
+                    }).join('');
+
                     return `
                         <ul class="list-group list-group-flush list-group-horizontal-sm showcfssubprojectmodal" style="cursor: pointer;" data-projectid="${master.fk_project_id}" data-mbl="${master.mbl}">
                             <li class="align-middle list-group-item">Total ${totalSubprojects}</li>
                             <li class="align-middle list-group-item"><i class="fa-solid fa-circle-check me-1" style="color:rgb(13, 82, 200)"></i>CFS ${totalCFS}</li>
                             <li class="align-middle list-group-item"><i class="fa-solid fa-circle-check me-1" style="color:rgb(13, 82, 200)"></i>CR ${totalCR}</li>
+                            <li class="align-middle list-group-item" style="display:none">${subprojectItems}</li>
                         </ul>
                     `;
                 }).join('');
             };
 
-            const drayageUser = project.drayage_user_relation?.gntc_description || '';
-            const drayageFile = project.drayage_file_relation?.gntc_description || '';
+            const drayageUser = project.drayage_user && project.drayage_user_desc || '';
+            const drayageFile = project.drayage_typefile && project.drayage_file_desc || '';
     
             const rowHTML = `
             <tr>
@@ -190,11 +206,12 @@ $(document).ready(function() {
                 <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.container_number))}</ul></td>
                 <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.total_pieces), '0')}</ul></td>
                 <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.total_pallets), '0')}</ul></td>
-                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.eta_port))}</ul></td>
-                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.arrival_date))}</ul></td>
-                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => m.lfd))}</ul></td>
+                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => formatDate(m.eta_port, 'short')))}</ul></td>
+                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => formatDate(m.arrival_date, 'short')))}</ul></td>
+                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m => formatDate(m.lfd, 'short')))}</ul></td>
                 <td>${createHouseList(project.masters)}</td>
                 <td><ul class="list-group list-group-flush">${createMasterActions(project.masters)}</ul></td>
+                <td><ul class="list-group list-group-flush">${createList(project.masters.map(m =>m.notes))}</ul></td>
             `;
     
             table.row.add($(rowHTML));
@@ -1012,6 +1029,15 @@ $(document).ready(function() {
         }
 
         let formData = new FormData($('#createeditnewcfsproject')[0]);
+        Swal.fire({
+            title: 'Saving project...',
+            text: 'Please wait while we save the project.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'saveNewProject',
             type: 'POST',
@@ -1019,6 +1045,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -1037,12 +1064,14 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem adding the project. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -1072,7 +1101,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem adding the project. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }
@@ -1121,7 +1150,6 @@ $(document).ready(function() {
         if(project){
             let drayageUserPromise = new Promise ((resolve, reject) => {
                 if(project.drayage_user){
-                    let drayage_user = selectedDrayageUser.find(item => item === project.drayage_user);
                     $('#inputnewcfspeojectdrayageperson').val(project.drayage_user).trigger('change');
                     resolve();
                 } else {
@@ -1132,7 +1160,6 @@ $(document).ready(function() {
 
             let drayageFileTypePromise = new Promise ((resolve, reject) => {
                 if(project.drayage_typefile){
-                    let drayage_typefile = selectedDrayageFiletype.find(item => item === project.drayage_typefile);
                     $('#inputnewcfsprojectdrayagefiletype').val(project.drayage_typefile).trigger('change');
                     resolve();
                 } else {
@@ -1143,7 +1170,6 @@ $(document).ready(function() {
 
             let invoicePromise = new Promise ((resolve, reject) => {
                 if(project.invoice){
-                    let invoice = selectedInvoice.find(item => item === project.invoice);
                     $('#inputnewcfsprojectinvoice').val(project.invoice).trigger('change');
 
                     
@@ -1221,6 +1247,15 @@ $(document).ready(function() {
         }
 
         let formData = new FormData($('#createeditnewcfsproject')[0]);
+        Swal.fire({
+            title: 'Updating project...',
+            text: 'Please wait while the project is being updated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'editNewProject',
             type: 'POST',
@@ -1228,6 +1263,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -1246,12 +1282,14 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem updating the project. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -1281,7 +1319,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem updating the project. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }
@@ -1305,7 +1343,16 @@ $(document).ready(function() {
                 confirmButtonText: 'Yes, delete',
                 cancelButtonText: 'Cancel',
             }).then((result) => {
-                if(result.isConfirmed){
+                    if(result.isConfirmed){
+                        Swal.fire({
+                        title: 'Deleting project...',
+                        text: 'Please wait while we delete the project.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                
                     $.ajax({
                         url: 'deleteProject',
                         type: 'POST',
@@ -1314,6 +1361,7 @@ $(document).ready(function() {
                         },
                         success: function(response){
                             if(response.success){
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Deleted!',
@@ -1330,16 +1378,29 @@ $(document).ready(function() {
                                     table.search(currentFilter).draw();
                                 });
                             }else{
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error',
-                                    text: 'There was an issue deleting the project.',
+                                    text: response.message || 'There was an issue deleting the project.',
                                     confirmButtonText: 'Ok'
                                 });
                             }
                             
                         },
-                        
+                        error: function(xhr){
+                            Swal.close();
+                            let msg = 'Unexpected error';
+                            if(xhr.responseJSON && xhr.responseJSON.message){
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                                confirmButtonText: 'Ok'
+                            });
+                        }
                     })
                 }
             })
@@ -1449,6 +1510,16 @@ $(document).ready(function() {
         }
 
         let formData = new FormData($('#createMastercfs')[0]);
+
+        Swal.fire({
+            title: 'Saving master...',
+            text: 'Please wait while we save the master.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'saveNewMaster',
             type: 'POST',
@@ -1456,6 +1527,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -1475,12 +1547,14 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem adding the project. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -1510,7 +1584,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem adding the Master. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }
@@ -1539,10 +1613,10 @@ $(document).ready(function() {
 
                     $('#inputnewmastercfsproyectid').val(master.fk_project_id);
                     $('#inputnewmastercfscontainernumber').val(master.container_number);
-                    $('#inputnewmastercfsetaport').val(master.eta_port_full);
-                    $('#inputnewmastercfsarrivaldate').val(master.arrival_date_full);
-                    $('#inputnewmastercfslfd').val(master.lfd_full);
-                    //$('#inputnewmastercfsnotes').val(master.notes);
+                    $('#inputnewmastercfsetaport').val(formatDate(master.eta_port, 'full'));
+                    $('#inputnewmastercfsarrivaldate').val(formatDate(master.arrival_date, 'full'));
+                    $('#inputnewmastercfslfd').val(formatDate(master.lfd, 'full'));
+                    $('#inputnewmastercfsnotes').val(master.notes);
 
                     //$('#showcfsmaster').modal('hide');
                     $('#newcfsmaster').modal('show');
@@ -1604,6 +1678,16 @@ $(document).ready(function() {
         }
 
         let formData = new FormData($('#createMastercfs')[0]);
+
+        Swal.fire({
+            title: 'Updating master...',
+            text: 'Please wait while the master is being updated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'editNewMaster',
             type: 'POST',
@@ -1611,6 +1695,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -1630,12 +1715,14 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem updating the Master. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -1665,7 +1752,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem updating the Master. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }
@@ -1694,6 +1781,15 @@ $(document).ready(function() {
                 cancelButtonText: 'Cancel',
             }).then((result) => {
                 if(result.isConfirmed){
+                    Swal.fire({
+                        title: 'Deleting master...',
+                        text: 'Please wait while we delete the master.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
                     $.ajax({
                         url: 'deleteMaster',
                         type: 'POST',
@@ -1703,6 +1799,7 @@ $(document).ready(function() {
                         },
                         success: function(response){
                             if(response.success){
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Deleted!',
@@ -1720,16 +1817,29 @@ $(document).ready(function() {
                                     table.search(currentFilterproject).draw();
                                 });
                             }else{
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error',
-                                    text: 'There was an issue deleting the master.',
+                                    text: response.message || 'There was an issue deleting the master.',
                                     confirmButtonText: 'Ok'
                                 });
                             }
                             
                         },
-                        
+                        error: function(xhr){
+                            Swal.close();
+                            let msg = 'Unexpected error';
+                            if(xhr.responseJSON && xhr.responseJSON.message){
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                                confirmButtonText: 'Ok'
+                            });
+                        }
                     })
                 }
             })
@@ -1753,6 +1863,15 @@ $(document).ready(function() {
         // Luego, buscar el master dentro de ese proyecto
         const master = project?.masters?.find(m => m.mbl == mastermbl);
         if(master){
+            Swal.fire({
+                        title: 'Searching for subprojects...',
+                        text: 'Please wait while we search the subprojects.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+            });
+
             $.ajax({
                 url: 'getMastersSubprojects',
                 type: 'POST',
@@ -1762,6 +1881,7 @@ $(document).ready(function() {
                 },
                 success: function(response){
                     if(response.success){
+                            Swal.close();
                             // Actualizamos la variable global con los nuevos datos
                             window.subprojectsData = response.subprojects;
                             window.projectsData = response.projects;
@@ -1783,6 +1903,7 @@ $(document).ready(function() {
                             .attr('data-mbl', mastermbl);
                             $('#showcfssubproject').modal('show');
                     }else{
+                        Swal.close();
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
@@ -1825,8 +1946,8 @@ $(document).ready(function() {
         if(master){
             $('#inputnewsubprojectproyectid').val(master.fk_project_id);
             $('#inputnewsubprojectcfsmbl').val(master.mbl);
-            setDateAndLock('#inputnewsubprojectcfsarrivaldate', master.arrival_date_full);
-            setDateAndLock('#inputnewsubprojectcfslfd', master.lfd_full);
+            setDateAndLock('#inputnewsubprojectcfsarrivaldate', formatDate(master.arrival_date, 'full'));
+            setDateAndLock('#inputnewsubprojectcfslfd', formatDate(master.lfd, 'full'));
             updateDaysAfterLFD();
             $('#showcfssubproject').modal('hide');
             
@@ -1992,6 +2113,26 @@ $(document).ready(function() {
         $(inputSelector).prop('readonly', true); // también en el HTML
     }
 
+    function setDateAndLockEdit(inputSelector, value){
+        const input = $(inputSelector)[0];
+        let dateValue = value;
+
+        // Convertir string a Date si es necesario
+        if(typeof value === 'string'){
+            dateValue = new Date(value);
+        }
+
+        if(input._flatpickr){
+            input._flatpickr.setDate(dateValue, true); // true = trigger change
+            input._flatpickr.set('clickOpens', false);
+        } else {
+            $(inputSelector).val(formatDate(dateValue, 'full'));
+        }
+
+        $(inputSelector).prop('readonly', true);
+    }
+
+
     // Llamar a la función para limpiar inputs cuando se cierre el modal de los Subprojects
     $('#newcfssubproject').on('hidden.bs.modal', function() {
         resetModalNewCFSSubprojectsFields('#newcfssubproject');
@@ -2009,6 +2150,10 @@ $(document).ready(function() {
             this.selectedIndex = 0;
         });
 
+        // Eliminar todos los campos dinámicos de HBL References
+        $('.dynamicHBLReference').closest('div.col-md-6').remove();
+        hblReferenceIndex = 1; // resetear el contador global
+
         //Eliminacion de los campos dinamicos
         $('.dynamicHBLReference').each(function () {
             const field = $(this);
@@ -2021,6 +2166,10 @@ $(document).ready(function() {
                 hblReferenceIndex--;
             }
         });
+
+        // Eliminar todos los campos dinámicos de Part Numbers
+        $('.dynamicPartNumber').closest('div.col-md-6').remove();
+        partNumberIndex = 1; // resetear el contador global
 
         $('.dynamicPartNumber').each(function () {
             const field = $(this);
@@ -2046,6 +2195,7 @@ $(document).ready(function() {
 
         $('#checkAgent').prop('checked', false);
         $('#checkCollected').prop('checked', false);
+        $('#checkPayed').prop('checked', false);
 
         //$('#editnewcfsproject').text('Save').attr('id', 'savecfssubproject');
         $('#staticnewcfssubproject').text('New House');
@@ -2072,7 +2222,7 @@ $(document).ready(function() {
 
             const fkProjectId = pkproject;
 
-            const cfscommentvalue = sub.cfscomment_relation?.gntc_value || sub.cfscomment_relation?.gntc_description || '';
+            const cfscommentvalue = sub.cfs_comment && sub.cfs_value || sub.cfs_desc || '';
             let cfscomment = '';
 
             if (cfscommentvalue === 'Yes') {
@@ -2083,7 +2233,7 @@ $(document).ready(function() {
                 cfscomment = '<i class="fa-solid fa-circle-check text-success"></i> ' + cfscommentvalue;
             }
 
-            const customreleasetvalue = sub.customrelease_relation?.gntc_value || sub.customrelease_relation?.gntc_description || '';
+            const customreleasetvalue = sub.customs_release_comment && sub.cr_value || sub.cr_desc || '';
             let customrelease = '';
 
             if (customreleasetvalue === 'Yes') {
@@ -2094,14 +2244,21 @@ $(document).ready(function() {
                 customrelease = '<i class="fa-solid fa-circle-check text-success"></i> ' + customreleasetvalue;
             }
 
-            const costumer = sub.costumer?.description || '';
+            const costumer = sub.pk_customer && sub.customer_desc || '';
 
             const hblList = [
-                `<li class="list-group-item px-0">${sub.hbl}</li>`,
-                ...(sub.hblreferences?.map(h => `<li class="list-group-item px-0">(${h.description})</li>`) || [])
+                `<li class="list-group-item px-0">${sub.hbl ?? ''}</li>`,
+                ...(sub.hblreferences?.length
+                    ? sub.hblreferences
+                        .filter(h => h.description) // ← solo las que tengan descripción
+                        .map(h => `<li class="list-group-item px-0">(${h.description})</li>`)
+                    : []
+                )
             ].join('');
     
-            const pnsList = (sub.pns || []).map(pn => `<li class="list-group-item px-0">${pn.description}</li>`).join('');
+            const pnsList = (sub.partnumbers || [])
+                .map(pn => `<li class="list-group-item px-0">${pn.description ?? ''}</li>`)
+                .join('');
             
             const chargesList = `
                 <!--<li style="" class="d-flex justify-content-between list-group-item px-0">
@@ -2119,9 +2276,37 @@ $(document).ready(function() {
             `;
 
             let rowHighlightClass = '';
-            if (sub.collected === 'Yes') {
+
+            if (
+                sub.collected === 'No' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes' &&
+                (sub.charges !== null && Number(sub.charges) !== 0)
+            ) {
+                rowHighlightClass = 'bg-light-yellow';
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'Yes' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes'
+            ) {
                 rowHighlightClass = 'bg-light-green';
-            } else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') {
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'No'
+            ) {
+                rowHighlightClass = 'bg-light-green';
+            } else if (
+                sub.collected === 'Yes' &&
+                sub.payed === 'No' &&
+                (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no') &&
+                sub.agent === 'Yes'
+            ) {
+                rowHighlightClass = 'bg-light-green';
+            }else if (customreleasetvalue && customreleasetvalue.toLowerCase() !== 'no' && sub.collected === 'No') {
                 rowHighlightClass = 'bg-light-blue';
             }
 
@@ -2141,11 +2326,11 @@ $(document).ready(function() {
                         <ul class="list-group list-group-flush">${pnsList}</ul>
                     </td>
                     <td class="align-middle">${cfscomment}</td>
-                    <td class="align-middle">${sub.arrival_date || ''}</td>
+                    <td class="align-middle">${formatDate(sub.arrival_date, 'short')}</td>
                     <td class="align-middle">${sub.whr || ''}</td>
-                    <td class="align-middle">${sub.lfd || ''}</td>
+                    <td class="align-middle">${formatDate(sub.lfd, 'short')}</td>
                     <td class="align-middle">${customrelease}</td>
-                    <td class="align-middle">${sub.out_date_cr || ''}</td>
+                    <td class="align-middle">${formatDate(sub.out_date_cr, 'short')}</td>
                     <td class="align-middle">${sub.cr || ''}</td>
                     <!--<td class="align-middle">
                         <ul class="list-group list-group-flush">${chargesList}</ul>
@@ -2543,6 +2728,15 @@ $(document).ready(function() {
             formData.append('part_numbers[]', value);
         });
 
+        Swal.fire({
+            title: 'Saving subproject...',
+            text: 'Please wait while we save the subproject.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'saveNewSubproject',
             type: 'POST',
@@ -2550,6 +2744,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -2578,12 +2773,14 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem adding the subproject. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -2613,7 +2810,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem adding the Master. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }
@@ -2645,6 +2842,16 @@ $(document).ready(function() {
                 cancelButtonText: 'Cancel',
             }).then((result) => {
                 if(result.isConfirmed){
+
+                    Swal.fire({
+                        title: 'Deleting subproject...',
+                        text: 'Please wait while we delete the subproject.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: 'deleteSubproject',
                         type: 'POST',
@@ -2655,6 +2862,7 @@ $(document).ready(function() {
                         },
                         success: function(response){
                             if(response.success){
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Deleted!',
@@ -2680,6 +2888,7 @@ $(document).ready(function() {
                                     tableSubprojects.search(currentFilter).draw();
                                 });
                             }else{
+                                Swal.close();
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error',
@@ -2689,6 +2898,19 @@ $(document).ready(function() {
                             }
                             
                         },
+                        error: function(xhr){
+                            Swal.close();
+                            let msg = 'Unexpected error';
+                            if(xhr.responseJSON && xhr.responseJSON.message){
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                                confirmButtonText: 'Ok'
+                            });
+                        }
                         
                     })
                 }
@@ -2722,46 +2944,47 @@ $(document).ready(function() {
         const subproject = master?.subprojects?.find(sub => sub.hbl == subprojectid);
 
         if(subproject){
-            //Relleno de los HBL References(campos dinamicos)
+            // HBL References
             $('.dynamicHBLReference').closest('div.col-md-6').remove();
             hblReferenceIndex = 1;
             if (Array.isArray(subproject.hblreferences)) {
-                subproject.hblreferences.forEach(ref => {
-                    const hblReferenceId = `inputnewsubprojectcfshblreference${hblReferenceIndex}`;
-                    const hblDiv = `
-                        <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
-                            <label for="${hblReferenceId}" class="form-label" style="font-weight:500">HBL Reference</label>
-                            <input type="text" class="form-control dynamicHBLReference" id="${hblReferenceId}" name="${hblReferenceId}" value="${ref.description}">
-                            <div class="invalid-feedback" id="error-${hblReferenceId}"></div>
-                        </div>
-                    `;
-                    $('#addhblreference').closest('.mb-3').after(hblDiv);
-                    hblReferenceIndex++;
-                });
+                subproject.hblreferences
+                    .filter(ref => ref.description) // solo tomar los que tengan descripción
+                    .forEach(ref => {
+                        const hblReferenceId = `inputnewsubprojectcfshblreference${hblReferenceIndex}`;
+                        const hblDiv = `
+                            <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
+                                <label for="${hblReferenceId}" class="form-label" style="font-weight:500">HBL Reference</label>
+                                <input type="text" class="form-control dynamicHBLReference" id="${hblReferenceId}" name="${hblReferenceId}" value="${ref.description}">
+                                <div class="invalid-feedback" id="error-${hblReferenceId}"></div>
+                            </div>
+                        `;
+                        $('#addhblreference').closest('.mb-3').after(hblDiv);
+                        hblReferenceIndex++;
+                    });
             }
 
-            // Agregar los part numbers del subproject (campos dinamicos)
+            // Part Numbers
             $('.dynamicPartNumber').closest('div.col-md-6').remove();
             partNumberIndex = 1;
-            if (Array.isArray(subproject.pns)) {
-                subproject.pns.forEach(pn => {
-                    const partNumberId = `inputnewsubprojectcfspartnumber${partNumberIndex}`;
-                    const selectDiv = `
-                        <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
-                            <label for="${partNumberId}" class="form-label" style="font-weight:500">Product</label>
-                            <select class="form-select dynamicPartNumber" id="${partNumberId}" name="${partNumberId}">
-                                <option value="${pn.pk_part_number}" selected>${pn.description}</option>
-                            </select>
-                            <div class="invalid-feedback" id="error-${partNumberId}"></div>
-                        </div>
-                    `;
-                    $('#addpartnumber').closest('.mb-3').after(selectDiv);
-
-                    // Inicializar el select2 para el nuevo elemento
-                    initializeDynamicSelect2(`#${partNumberId}`);
-
-                    partNumberIndex++;
-                });
+            if (Array.isArray(subproject.partnumbers)) {
+                subproject.partnumbers
+                    .filter(pn => pn.pk_part_number && pn.description) // solo los válidos
+                    .forEach(pn => {
+                        const partNumberId = `inputnewsubprojectcfspartnumber${partNumberIndex}`;
+                        const selectDiv = `
+                            <div class="mb-3 col-md-6 col-lg-4 col-xl-3">
+                                <label for="${partNumberId}" class="form-label" style="font-weight:500">Product</label>
+                                <select class="form-select dynamicPartNumber" id="${partNumberId}" name="${partNumberId}">
+                                    <option value="${pn.pk_part_number}" selected>${pn.description}</option>
+                                </select>
+                                <div class="invalid-feedback" id="error-${partNumberId}"></div>
+                            </div>
+                        `;
+                        $('#addpartnumber').closest('.mb-3').after(selectDiv);
+                        initializeDynamicSelect2(`#${partNumberId}`);
+                        partNumberIndex++;
+                    });
             }
 
             //Promises para los selects2
@@ -2836,7 +3059,7 @@ $(document).ready(function() {
                     //$('#inputnewsubprojectcfsarrivaldate').val(subproject.arrival_date_full);
                     $('#inputnewsubprojectcfsmagayawhr').val(subproject.whr);
                     //$('#inputnewsubprojectcfslfd').val(subproject.lfd_full);
-                    $('#inputnewsubprojectcfsoutdatecr').val(subproject.out_date_cr_full);
+                    $('#inputnewsubprojectcfsoutdatecr').val(formatDate(subproject.out_date_cr, 'full'));
                     $('#inputnewsubprojectcfsmagayacr').val(subproject.cr);
                     //$('#inputnewsubprojectcfsdalfd').val(subproject.days_after_lfd);
                     $('#inputnewsubprojectcfscuft').val(subproject.cuft);
@@ -2845,8 +3068,8 @@ $(document).ready(function() {
                     $('#inputnewsubprojectcfscharges').val(subproject.charges);
                     $('#inputnewsubprojectcfsnotes').val(subproject.notes);
 
-                    setDateAndLock('#inputnewsubprojectcfsarrivaldate', master.arrival_date_full);
-                    setDateAndLock('#inputnewsubprojectcfslfd', master.lfd_full);
+                    setDateAndLock('#inputnewsubprojectcfsarrivaldate', formatDate(master.arrival_date, 'full'));
+                    setDateAndLock('#inputnewsubprojectcfslfd', formatDate(master.lfd, 'full'));
                     updateDaysAfterLFD();
 
                     if (subproject.agent === "Yes") {
@@ -2859,6 +3082,12 @@ $(document).ready(function() {
                         $('#checkCollected').prop('checked', true);
                     } else {
                         $('#checkCollected').prop('checked', false);
+                    }
+
+                    if (subproject.payed === "Yes") {
+                        $('#checkPayed').prop('checked', true);
+                    } else {
+                        $('#checkPayed').prop('checked', false);
                     }
 
                     $('#showcfssubproject').modal('hide');
@@ -2979,6 +3208,15 @@ $(document).ready(function() {
             formData.append('part_numbers[]', value);
         });
 
+        Swal.fire({
+            title: 'Updating subproject...',
+            text: 'Please wait while the subproject is being updated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: 'editNewSubproject',
             type: 'POST',
@@ -2986,6 +3224,7 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function (response){
+                Swal.close();
                 Swal.fire({
                     icon: 'success',
                     title: '¡Success!',
@@ -3014,12 +3253,15 @@ $(document).ready(function() {
                 });
             },
             error: function (xhr, status, error) {
+                Swal.close();
+
                 // Limpia los errores anteriores
                 $('input, select').removeClass('is-invalid');
                 $('.invalid-feedback').text(''); // Vaciar mensajes de error
                 $('.select2-selection').removeClass('is-invalid'); // También eliminar la clase del contenedor de select2
     
                 let errors = xhr.responseJSON.errors;
+                let generalMessage = xhr.responseJSON?.message || 'There was a problem updating the Master. Please try again.';
     
                 // Verifica si hay errores
                 if (errors) {
@@ -3049,7 +3291,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: '¡Error!',
-                    text: 'There was a problem adding the Master. Please try again.',
+                    text: generalMessage,
                     confirmButtonText: 'Ok'
                 });
             }

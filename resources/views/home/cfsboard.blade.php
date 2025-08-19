@@ -267,6 +267,7 @@
                                     <th scope="col">LDF</th>
                                     <th scope="col">House</th>
                                     <th scope="col">Options</th>
+                                    <th scope="col">Notes</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -400,7 +401,7 @@
                                                     <div class="invalid-feedback" id="error-inputnewmastercfslfd"></div>
                                                 </div>
 
-                                                <div class="mb-3 col-md-6 col-lg-4" style="display:none;">
+                                                <div class="mb-3 col-md-6 col-lg-4" style="">
                                                     <label for="inputnewmastercfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewmastercfsnotes" name="inputnewmastercfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewmastercfsnotes"></div>
@@ -791,6 +792,15 @@
                                                     <label for="inputnewsubprojectcfsnotes" class="form-label text-nowrap text-capitalize" style="font-weight:500">Notes</label>
                                                     <textarea rows="1" type="text" class="form-control" id="inputnewsubprojectcfsnotes" name="inputnewsubprojectcfsnotes"></textarea>
                                                     <div class="invalid-feedback" id="error-inputnewsubprojectcfsnotes"></div>
+                                                </div>
+
+                                                <div class="mb-4 col-md-6 col-lg-4  col-xl-3 d-flex align-items-end" style="font-weight:500">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="Yes" id="checkPayed" name="checkPayed">
+                                                        <label class="form-check-label" for="checkPayed">
+                                                            Payed
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                     </form>

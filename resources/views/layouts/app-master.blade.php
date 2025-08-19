@@ -34,14 +34,30 @@
           display: none;
       }
 
+      .showcfssubprojectmodal {
+        border-radius: 10px;    /* ajusta el número para hacerlo más o menos redondeado */
+        border: 1px solid #ccc; /* opcional: para que parezca un botón */
+        --bs-list-group-bg: unset !important; /* Sobrescribe el fondo */
+        background-color: rgba(200, 240, 130, 0.35) !important;
+      }
+
+      tr.showcfssubprojectmodal {
+        background-color: #34b3320c !important;
+      }
+
       tr.bg-light-blue {
           --bs-table-bg: rgba(30, 110, 255, 0.25);
       }
       tr.bg-light-green {
           --bs-table-bg: rgba(0, 200, 80, 0.25);
       }
+      tr.bg-light-yellow {
+          --bs-table-bg: rgba(255, 215, 0, 0.25); /* amarillo dorado con 25% opacidad */
+      }
+      
       tr.bg-light-blue .list-group-item,
-      tr.bg-light-green .list-group-item {
+      tr.bg-light-green .list-group-item,
+      tr.bg-light-yellow .list-group-item {
           background-color: unset !important;
       }
 

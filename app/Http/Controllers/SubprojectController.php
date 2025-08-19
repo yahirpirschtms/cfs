@@ -17,447 +17,329 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Repositories\CFSboardRepository;
 
 class SubprojectController extends Controller
 {
-    //Funcion para obtener los subprojects del master
-    /*public function getMastersSubprojects(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl esté presente
-            $request->validate([
-                'mbl' => 'required|string',
-                'project_id' => 'required|string',
-            ]);
+    protected $repo;
 
-            // Obtener el Master por el ID
-            $master = Master::find($request->mbl);
+    public function __construct(CFSboardRepository $repo)
+    {
+        $this->repo = $repo;
+    }
 
-            if ($master) {
-
-                // Obtener los subprojects relacionados al mbl
-                $subprojects = Subproject::where('fk_mbl', $request->mbl)
-                ->where('status', '1')
-                ->with([
-                    'costumer' => function ($q) {
-                        $q->where('status', '1');
-                    },
-                    'pns' => function ($q) {
-                        $q->where('cfs_pn.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'services' => function ($q) {
-                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'hblreferences' => function ($q) { // <- añade esta parte
-                        $q->where('cfs_hbl_references.status', '1');
-                    },
-                    'cfscommentRelation',
-                    'customreleaseRelation',
-                ])
-                ->get();
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->project_id)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully founded.',
-                    'subprojects' => $subprojects,
-                    'masters' => $masters,
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
-            }
-        }
-        return redirect('/login');
-    }*/
-
-    //Funcion para obtener los subprojects del master mas rapida
     public function getMastersSubprojects(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl esté presente
-            $request->validate([
-                'mbl' => 'required|string',
-                'project_id' => 'required|string',
-            ]);
-
-            // Asignar variables desde el request
-            $projectId = $request->input('project_id');
-            $masterId = $request->input('mbl');
-
-            // Obtener el Master por el ID
-            $master = Master::where('mbl', $request->mbl)->exists();
-
-            if ($master) {
-
-                // Obtener todos los proyectos con sus relaciones necesarias en una sola consulta
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                    ->where('status', '1')
-                    ->with([
-                        'masters' => function ($q) {
-                            $q->where('status', '1')
-                            ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                            ->with([
-                                'subprojects' => function ($q) {
-                                    $q->where('status', '1')
-                                        ->with([
-                                            'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                            'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                            'costumer:pk_customer,description',
-                                            'pns:pk_part_number,description',
-                                            'hblreferences:pk_hbl_reference,description,fk_hbl',
-                                        ]);
-                                }
-                            ]);
-                        },
-                        'drayageUserRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'drayageFileRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'invoiceRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                    ])
-                ->get();
-
-                // Extraer subprojects filtrados directamente de projects
-                $subprojects = $projects
-                    ->filter(fn($project) => $project->project_id === $projectId) // filtrar solo el proyecto deseado
-                    ->flatMap(fn($project) =>
-                        $project->masters
-                            ->filter(fn($master) => $master->mbl === $masterId && $master->fk_project_id === $projectId) // filtrar masters
-                            ->flatMap(fn($master) => $master->subprojects)
-                    )->values();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully founded.',
-                    'subprojects' => $subprojects,
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
-            }
+        if (!Auth::check()) {
+            return redirect('/login');
         }
-        return redirect('/login');
+
+        $request->validate([
+            'mbl' => 'required|string',
+            'project_id' => 'required|string',
+        ]);
+
+        $projectId = $request->input('project_id');
+        $masterId = $request->input('mbl');
+
+        $masterExists = Master::where('mbl', $masterId)->exists();
+        if (!$masterExists) {
+            return response()->json(['success' => false, 'message' => 'Master not found.']);
+        }
+
+        $result = $this->repo->getProjectsWithSubprojects($projectId, $masterId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subprojects successfully found.',
+            'subprojects' => $result['selectedSubprojects'],
+            'projects' => $result['projects'],
+        ]);
     }
 
-    //Funcion añadir nuevo subproject
-    /*public function saveNewSubproject(Request $request){
-        if(Auth::check()) {
-            $validated = $request->validate([
-                'inputnewsubprojectproyectid' => 'required',
-                'inputnewsubprojectcfsmbl' => 'required',
-                'inputnewsubprojectcfssubprojectid' => 'required',
-                'inputnewsubprojectcfshbl' => 'required|unique:cfs_subprojects,hbl',
-                // Validación de los nuevos arreglos (hbl_references y part_numbers)
-                'hbl_references' => 'nullable|array',
-                'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
-
-                'part_numbers' => 'nullable|array',
-                'part_numbers.*' => 'nullable|string|required_without:part_numbers', // Si hay algún valor, no debe ser vacío
-
-                'inputnewsubprojectcfspieces' => 'required|numeric|min:0',
-                'inputnewsubprojectcfsworkspalletized' => 'required',
-                'inputnewsubprojectcfspalletsexchanged' => 'required',
-                'inputnewsubprojectcfspallets' => 'required|numeric|min:0',
-                'inputnewsubprojectcfspalletizedcharges' => 'required',
-                'inputnewsubprojectcfscustomer' => 'required',
-                'checkAgent' => 'nullable',
-                'checkCollected' => 'nullable',
-                'inputnewsubprojectcfscfscomment' => 'required',
-                'inputnewsubprojectcfsarrivaldate' => 'required|date',
-                'inputnewsubprojectcfsmagayawhr' => 'nullable',
-                'inputnewsubprojectcfslfd' => 'required|date',
-                'inputnewsubprojectcfscustomsreleasecomment' => 'required',
-                'inputnewsubprojectcfsoutdatecr' => 'nullable',
-                'inputnewsubprojectcfsmagayacr' => 'nullable',
-                'inputnewsubprojectcfsdalfd' => 'required|numeric|min:0',
-                'inputnewsubprojectcfscuft' => 'nullable',
-                'inputnewsubprojectcfswhstoragecharges' => 'required',
-                'inputnewsubprojectcfsdeliverycharges' => 'nullable',
-                'inputnewsubprojectcfscharges' => 'required',
-                'inputnewsubprojectcfsnotes' => 'nullable',
-            ],[
-                'inputnewsubprojectproyectid.required' => 'Project ID is required.',
-                'inputnewsubprojectcfsmbl.required' => 'MBL is required.',
-                'inputnewsubprojectcfssubprojectid.required' => 'Subproject ID is required.',
-                'inputnewsubprojectcfshbl.unique' => 'HBL already exists.',
-                'inputnewsubprojectcfshbl.required' => 'HBL is required.',
-                'inputnewsubprojectcfspieces.required' => 'Pieces is required.',
-                'inputnewsubprojectcfspieces.numeric' => 'Pieces must be a number.',
-                'inputnewsubprojectcfspieces.min' => 'Pieces must be at least 0.',
-                'inputnewsubprojectcfsworkspalletized.required' => 'Works/Palletized is required.',
-                'inputnewsubprojectcfspalletsexchanged.required' => 'Pallets Exchanged is required.',
-                'inputnewsubprojectcfspallets.required' => 'Pallets is required.',
-                'inputnewsubprojectcfspallets.numeric' => 'Pallets must be a number.',
-                'inputnewsubprojectcfspallets.min' => 'Pallets must be at least 0.',
-                'inputnewsubprojectcfspalletizedcharges.required' => 'Palletized Charge is required.',
-                'inputnewsubprojectcfscustomer.required' => 'Customer is required.',
-                'inputnewsubprojectcfscfscomment.required' => 'CFS is required.',
-                'inputnewsubprojectcfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewsubprojectcfsarrivaldate.date' => 'Arrival must be a date.',
-                'inputnewsubprojectcfslfd.required' => 'LFD is required.',
-                'inputnewsubprojectcfslfd.date' => 'LFD must be a date.',
-                'inputnewsubprojectcfscustomsreleasecomment.required' => 'Custom release is required.',
-                'inputnewsubprojectcfsdalfd.required' => 'Days after LFD is required.',
-                'inputnewsubprojectcfsdalfd.numeric' => 'Days after LFD must be a number.',
-                'inputnewsubprojectcfsdalfd.min' => 'Days after LFD must be at least 0.',
-                'inputnewsubprojectcfswhstoragecharges.required' => 'WH Storahe Charge is required.',
-                'inputnewsubprojectcfscharges.required' => 'Charges is required.',
-
-                'hbl_references.array' => 'HBL references must be an array.',
-                'hbl_references.*.string' => 'Each HBL reference must be a string.',
-                'hbl_references.*.required_without' => 'Each HBL reference must not be empty if provided.',
-
-                'part_numbers.array' => 'Part numbers must be an array.',
-                'part_numbers.*.string' => 'Each Part Number must be a string.',
-                'part_numbers.*.required_without' => 'Each Part Number must not be empty if provided.',
-            ]);
-
-            $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
-            $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
-
-            $outdate = $request->inputnewsubprojectcfsoutdatecr ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s') : null;
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
-
-
-            $projectId = $request->input('inputnewsubprojectproyectid');
-            $masterId = $request->input('inputnewsubprojectcfsmbl');
-
-            $master = Master::where('mbl', $masterId)
-                ->where('fk_project_id', $projectId)
-                ->first();
-
-            if ($master) {
-                Subproject::create([
-                    'hbl' => $request->inputnewsubprojectcfshbl,
-                    'fk_mbl' => $request->inputnewsubprojectcfsmbl,
-                    'subprojects_id' => $request->inputnewsubprojectcfssubprojectid,
-                    'pieces' => $request->inputnewsubprojectcfspieces,
-                    'works_palletized' => $request->inputnewsubprojectcfsworkspalletized,
-                    'pallets_exchanged' => $request->inputnewsubprojectcfspalletsexchanged,
-                    'pallets' => $request->inputnewsubprojectcfspallets,
-                    'services_charge' => $request->inputnewsubprojectcfspalletizedcharges,
-                    'customer' => $request->inputnewsubprojectcfscustomer,
-                    'agent' => $checkAgent,
-                    'cfs_comment' => $request->inputnewsubprojectcfscfscomment,
-                    'arrival_date' => $arrivaldate,
-                    'whr' => $request->inputnewsubprojectcfsmagayawhr,
-                    'lfd' => $lfd,
-                    'customs_release_comment' => $request->inputnewsubprojectcfscustomsreleasecomment,
-                    'out_date_cr' => $outdate,
-                    'cr' => $request->inputnewsubprojectcfsmagayacr,
-                    'days_after_lfd' => $request->inputnewsubprojectcfsdalfd,
-                    'cuft' => $request->inputnewsubprojectcfscuft,
-                    'wh_storage_charge' => $request->inputnewsubprojectcfswhstoragecharges,
-                    'delivery_charges' => $request->inputnewsubprojectcfsdeliverycharges,
-                    'collected' => $checkCollected,
-                    'charges' => $request->inputnewsubprojectcfscharges,
-                    'notes' => $request->inputnewsubprojectcfsnotes,
-                    'created_by'=> Auth::check() ? Auth::user()->username : 'system',
-                    'created_date' => now(),
-                    'status' => '1',
-                ]);
-
-                // Obtener el subproyecto recién creado
-                $subproject = Subproject::where('hbl', $request->inputnewsubprojectcfshbl)->first();
-
-                // Guardar HBL References si vienen en el request
-                if ($request->filled('hbl_references')) {
-                    foreach ($request->hbl_references as $ref) {
-                        if (!empty($ref)) {
-                            HblReferences::create([
-                                'fk_hbl' => $subproject->hbl,
-                                'description' => $ref,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                    }
-                }
-
-                // Guardar Part Numbers si vienen en el request
-                if ($request->filled('part_numbers')) {
-                    foreach ($request->part_numbers as $pn) {
-                        if (!empty($pn)) {
-                            Partnumber::create([
-                                'fk_hbl' => $subproject->hbl,
-                                'fk_pn' => $pn,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                    }
-                }
-
-                // Obtener los subprojects relacionados al mbl
-                $subprojects = Subproject::where('fk_mbl', $request->inputnewsubprojectcfsmbl)
-                ->where('status', '1')
-                ->with([
-                    'costumer' => function ($q) {
-                        $q->where('status', '1');
-                    },
-                    'pns' => function ($q) {
-                        $q->where('cfs_pn.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'services' => function ($q) {
-                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'hblreferences' => function ($q) { // <- añade esta parte
-                        $q->where('cfs_hbl_references.status', '1');
-                    },
-                    'cfscommentRelation',
-                    'customreleaseRelation',
-                ])
-                ->get();
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->inputnewsubprojectproyectid)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully added.',
-                    'subprojects' => $subprojects,
-                    'masters' => $masters,
-                    'projects' => $projects,
-                ]);
-            }
-            else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Mastar or project not found.']);
-            }
-
-        }
-        return redirect('/login');
-    }*/
-
-    //Funcion añadir nuevo subproject mas rapida
     public function saveNewSubproject(Request $request){
-        if(Auth::check()) {
-            $validated = $request->validate([
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        $validated = $request->validate([
+                    'inputnewsubprojectproyectid' => 'required',
+                    'inputnewsubprojectcfsmbl' => 'required',
+                    'inputnewsubprojectcfssubprojectid' => 'required',
+                    'inputnewsubprojectcfshbl' => 'required',
+                    // Validación de los nuevos arreglos (hbl_references y part_numbers)
+                    'hbl_references' => 'nullable|array',
+                    'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
+
+                    'part_numbers' => 'nullable|array',
+                    'part_numbers.*' => 'nullable|string|required_without:part_numbers', // Si hay algún valor, no debe ser vacío
+
+                    'inputnewsubprojectcfspieces' => 'required|numeric|min:0',
+                    'inputnewsubprojectcfsworkspalletized' => 'required',
+                    'inputnewsubprojectcfspalletsexchanged' => 'required',
+                    'inputnewsubprojectcfspallets' => 'required|numeric|min:0',
+                    'inputnewsubprojectcfspalletizedcharges' => 'required',
+                    'inputnewsubprojectcfscustomer' => 'required',
+                    'checkAgent' => 'nullable',
+                    'checkCollected' => 'nullable',
+                    'checkPayed' => 'nullable',
+                    'inputnewsubprojectcfscfscomment' => 'required',
+                    'inputnewsubprojectcfsarrivaldate' => 'required|date',
+                    'inputnewsubprojectcfsmagayawhr' => 'nullable',
+                    'inputnewsubprojectcfslfd' => 'required|date',
+                    'inputnewsubprojectcfscustomsreleasecomment' => 'required',
+                    'inputnewsubprojectcfsoutdatecr' => 'nullable',
+                    'inputnewsubprojectcfsmagayacr' => 'nullable',
+                    'inputnewsubprojectcfsdalfd' => 'required|numeric|min:0',
+                    'inputnewsubprojectcfscuft' => 'nullable',
+                    'inputnewsubprojectcfswhstoragecharges' => 'required',
+                    'inputnewsubprojectcfsdeliverycharges' => 'nullable',
+                    'inputnewsubprojectcfscharges' => 'required',
+                    'inputnewsubprojectcfsnotes' => 'nullable',
+                ],[
+                    'inputnewsubprojectproyectid.required' => 'Project ID is required.',
+                    'inputnewsubprojectcfsmbl.required' => 'MBL is required.',
+                    'inputnewsubprojectcfssubprojectid.required' => 'Subproject ID is required.',
+                    'inputnewsubprojectcfshbl.unique' => 'HBL already exists.',
+                    'inputnewsubprojectcfshbl.required' => 'HBL is required.',
+                    'inputnewsubprojectcfspieces.required' => 'Pieces is required.',
+                    'inputnewsubprojectcfspieces.numeric' => 'Pieces must be a number.',
+                    'inputnewsubprojectcfspieces.min' => 'Pieces must be at least 0.',
+                    'inputnewsubprojectcfsworkspalletized.required' => 'Works/Palletized is required.',
+                    'inputnewsubprojectcfspalletsexchanged.required' => 'Pallets Exchanged is required.',
+                    'inputnewsubprojectcfspallets.required' => 'Pallets is required.',
+                    'inputnewsubprojectcfspallets.numeric' => 'Pallets must be a number.',
+                    'inputnewsubprojectcfspallets.min' => 'Pallets must be at least 0.',
+                    'inputnewsubprojectcfspalletizedcharges.required' => 'Palletized Charge is required.',
+                    'inputnewsubprojectcfscustomer.required' => 'Customer is required.',
+                    'inputnewsubprojectcfscfscomment.required' => 'CFS is required.',
+                    'inputnewsubprojectcfsarrivaldate.required' => 'Arrival Date is required.',
+                    'inputnewsubprojectcfsarrivaldate.date' => 'Arrival must be a date.',
+                    'inputnewsubprojectcfslfd.required' => 'LFD is required.',
+                    'inputnewsubprojectcfslfd.date' => 'LFD must be a date.',
+                    'inputnewsubprojectcfscustomsreleasecomment.required' => 'Custom release is required.',
+                    'inputnewsubprojectcfsdalfd.required' => 'Days after LFD is required.',
+                    'inputnewsubprojectcfsdalfd.numeric' => 'Days after LFD must be a number.',
+                    'inputnewsubprojectcfsdalfd.min' => 'Days after LFD must be at least 0.',
+                    'inputnewsubprojectcfswhstoragecharges.required' => 'WH Storahe Charge is required.',
+                    'inputnewsubprojectcfscharges.required' => 'Charges is required.',
+
+                    'hbl_references.array' => 'HBL references must be an array.',
+                    'hbl_references.*.string' => 'Each HBL reference must be a string.',
+                    'hbl_references.*.required_without' => 'Each HBL reference must not be empty if provided.',
+
+                    'part_numbers.array' => 'Part numbers must be an array.',
+                    'part_numbers.*.string' => 'Each Part Number must be a string.',
+                    'part_numbers.*.required_without' => 'Each Part Number must not be empty if provided.',
+                ]);
+
+        DB::beginTransaction();
+
+        try {
+            $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
+            $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
+            $checkPayed = $request->has('checkPayed') ? 'Yes' : 'No';
+
+            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
+            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
+            $outdate = $request->inputnewsubprojectcfsoutdatecr
+                ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s')
+                : null;
+
+            $projectId = $request->input('inputnewsubprojectproyectid');
+            $masterId = $request->input('inputnewsubprojectcfsmbl');
+
+            $master = Master::where('mbl', $masterId)
+                ->where('fk_project_id', $projectId)
+                ->first();
+
+            if (!$master) {
+                return response()->json(['success' => false, 'message' => 'Master or project not found.'], 404);
+            }
+
+            // Insertar subproject
+            DB::table('cfs_subprojects')->insert([
+                'hbl' => $request->inputnewsubprojectcfshbl,
+                'fk_mbl' => $masterId,
+                'subprojects_id' => $request->inputnewsubprojectcfssubprojectid,
+                'pieces' => $request->inputnewsubprojectcfspieces,
+                'works_palletized' => $request->inputnewsubprojectcfsworkspalletized,
+                'pallets_exchanged' => $request->inputnewsubprojectcfspalletsexchanged,
+                'pallets' => $request->inputnewsubprojectcfspallets,
+                'services_charge' => $request->inputnewsubprojectcfspalletizedcharges,
+                'customer' => $request->inputnewsubprojectcfscustomer,
+                'agent' => $checkAgent,
+                'cfs_comment' => $request->inputnewsubprojectcfscfscomment,
+                'arrival_date' => $arrivaldate,
+                'whr' => $request->inputnewsubprojectcfsmagayawhr,
+                'lfd' => $lfd,
+                'customs_release_comment' => $request->inputnewsubprojectcfscustomsreleasecomment,
+                'out_date_cr' => $outdate,
+                'cr' => $request->inputnewsubprojectcfsmagayacr,
+                'days_after_lfd' => $request->inputnewsubprojectcfsdalfd,
+                'cuft' => $request->inputnewsubprojectcfscuft,
+                'wh_storage_charge' => $request->inputnewsubprojectcfswhstoragecharges,
+                'delivery_charges' => $request->inputnewsubprojectcfsdeliverycharges,
+                'collected' => $checkCollected,
+                'payed' => $checkPayed,
+                'charges' => $request->inputnewsubprojectcfscharges,
+                'notes' => $request->inputnewsubprojectcfsnotes,
+                'created_by'=> Auth::user()->username ?? 'system',
+                'created_date' => now(),
+                'status' => '1',
+            ]);
+
+            // Recalcular totales del Master
+            $master->recalculateTotals();
+
+            // Guardar HBL References en batch
+            if ($request->filled('hbl_references')) {
+                $hblRefs = array_map(fn($ref) => [
+                    'fk_hbl' => $request->inputnewsubprojectcfshbl,
+                    'description' => $ref,
+                    'status' => '1',
+                    'created_by' => Auth::user()->username ?? 'system',
+                    'created_date' => now(),
+                ], array_filter($request->hbl_references));
+
+                if (!empty($hblRefs)) {
+                    DB::table('cfs_hbl_references')->insert($hblRefs);
+                }
+            }
+
+            // Guardar Part Numbers en batch
+            if ($request->filled('part_numbers')) {
+                $pns = array_map(fn($pn) => [
+                    'fk_hbl' => $request->inputnewsubprojectcfshbl,
+                    'fk_pn' => $pn,
+                    'status' => '1',
+                    'created_by' => Auth::user()->username ?? 'system',
+                    'created_date' => now(),
+                ], array_filter($request->part_numbers));
+
+                if (!empty($pns)) {
+                    DB::table('cfs_h_pn')->insert($pns);
+                }
+            }
+
+            $result = $this->repo->getProjectsWithSubprojects($projectId, $masterId);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subproject successfully added.',
+                'subprojects' => $result['selectedSubprojects'],
+                'projects' => $result['projects'],
+                'pkproject' => $projectId,
+            ], 200);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'Duplicate entry')) {
+                return response()->json([
+                    'message' => 'HBL already exists.'
+                ], 422);
+            }
+
+            \Log::error('Error saving subproject: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error adding subproject: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteSubproject(Request $request){
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        $request->validate([
+            'mbl' => 'required|string',
+            'hbl' => 'required|string',
+            'project' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $username = Auth::user()->username ?? 'system';
+            $now = now();
+
+            // Desactivar subproject
+            $affected = DB::table('cfs_subprojects')
+                ->where('hbl', $request->hbl)
+                ->where('fk_mbl', $request->mbl)
+                ->where('status', 1)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            if ($affected === 0) {
+                throw new \Exception('Subproject not found or already deleted.');
+            }
+
+            // Desactivar Part Numbers asociados
+            DB::table('cfs_h_pn')
+                ->where('fk_hbl', $request->hbl)
+                ->update([
+                    'status' => 0,
+                    'updated_by' => $username,
+                    'transaction_date' => $now,
+                ]);
+
+            // Eliminar HBL References asociados
+            DB::table('cfs_hbl_references')
+                ->where('fk_hbl', $request->hbl)
+                ->delete();
+
+            // Recalcular totales del Master si existe
+            $master = Master::where('mbl', $request->mbl)->first();
+            if ($master) {
+                $master->recalculateTotals();
+            }
+
+            // Obtener proyectos y subprojects actualizados desde el repo
+            $result = $this->repo->getProjectsWithSubprojects($request->project, $request->mbl);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subproject successfully deleted.',
+                'projects' => $result['projects'],
+                'subprojects' => $result['selectedSubprojects'],
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Error deleting subproject: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting subproject: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function editNewSubproject(Request $request){
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
+        $originalHBL = $request->input('inputnewsubprojectcfshbloriginal');
+
+        $validated = $request->validate([
                 'inputnewsubprojectproyectid' => 'required',
                 'inputnewsubprojectcfsmbl' => 'required',
                 'inputnewsubprojectcfssubprojectid' => 'required',
-                'inputnewsubprojectcfshbl' => 'required|unique:cfs_subprojects,hbl',
+                //'inputnewsubprojectcfshbl' => 'required',
+                'inputnewsubprojectcfshbl' => [
+                    'required',
+                    Rule::unique('cfs_subprojects', 'hbl')->ignore($originalHBL, 'hbl')
+                ],
                 // Validación de los nuevos arreglos (hbl_references y part_numbers)
                 'hbl_references' => 'nullable|array',
                 'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
@@ -473,6 +355,7 @@ class SubprojectController extends Controller
                 'inputnewsubprojectcfscustomer' => 'required',
                 'checkAgent' => 'nullable',
                 'checkCollected' => 'nullable',
+                'checkPayed' => 'nullable',
                 'inputnewsubprojectcfscfscomment' => 'required',
                 'inputnewsubprojectcfsarrivaldate' => 'required|date',
                 'inputnewsubprojectcfsmagayawhr' => 'nullable',
@@ -523,24 +406,34 @@ class SubprojectController extends Controller
                 'part_numbers.*.required_without' => 'Each Part Number must not be empty if provided.',
             ]);
 
+        DB::beginTransaction();
+
+        try {
             $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
             $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
+            $username = Auth::user()->username ?? 'system';
+            $checkPayed = $request->has('checkPayed') ? 'Yes' : 'No';
 
-            $outdate = $request->inputnewsubprojectcfsoutdatecr ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s') : null;
             $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
             $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
+            $outdate = $request->inputnewsubprojectcfsoutdatecr
+                ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s')
+                : null;
 
             $projectId = $request->input('inputnewsubprojectproyectid');
             $masterId = $request->input('inputnewsubprojectcfsmbl');
+            $newHBL = $request->inputnewsubprojectcfshbl;
 
-            $master = Master::where('mbl', $request->inputnewsubprojectcfsmbl)
-            ->where('fk_project_id', $request->inputnewsubprojectproyectid)
-            ->exists();
+            $master = Master::where('mbl', $masterId)->where('fk_project_id', $projectId)->first();
+            if (!$master) {
+                throw new \Exception('Master not found.');
+            }
 
-            if ($master) {
-                $subproject = Subproject::create([
-                    'hbl' => $request->inputnewsubprojectcfshbl,
-                    'fk_mbl' => $request->inputnewsubprojectcfsmbl,
+            // Actualizar subproject usando DB::update
+            DB::table('cfs_subprojects')
+                ->where('hbl', $originalHBL)
+                ->update([
+                    'hbl' => $newHBL,
                     'subprojects_id' => $request->inputnewsubprojectcfssubprojectid,
                     'pieces' => $request->inputnewsubprojectcfspieces,
                     'works_palletized' => $request->inputnewsubprojectcfsworkspalletized,
@@ -549,6 +442,8 @@ class SubprojectController extends Controller
                     'services_charge' => $request->inputnewsubprojectcfspalletizedcharges,
                     'customer' => $request->inputnewsubprojectcfscustomer,
                     'agent' => $checkAgent,
+                    'collected' => $checkCollected,
+                    'payed' => $checkPayed,
                     'cfs_comment' => $request->inputnewsubprojectcfscfscomment,
                     'arrival_date' => $arrivaldate,
                     'whr' => $request->inputnewsubprojectcfsmagayawhr,
@@ -560,901 +455,67 @@ class SubprojectController extends Controller
                     'cuft' => $request->inputnewsubprojectcfscuft,
                     'wh_storage_charge' => $request->inputnewsubprojectcfswhstoragecharges,
                     'delivery_charges' => $request->inputnewsubprojectcfsdeliverycharges,
-                    'collected' => $checkCollected,
                     'charges' => $request->inputnewsubprojectcfscharges,
                     'notes' => $request->inputnewsubprojectcfsnotes,
-                    'created_by'=> Auth::check() ? Auth::user()->username : 'system',
-                    'created_date' => now(),
+                    'updated_by' => $username,
+                    'transaction_date' => now(),
+                ]);
+
+            // Actualizar HBL References en batch
+            DB::table('cfs_hbl_references')->where('fk_hbl', $originalHBL)->delete();
+            if ($request->filled('hbl_references')) {
+                $hblRefs = array_map(fn($ref) => [
+                    'fk_hbl' => $newHBL,
+                    'description' => $ref,
                     'status' => '1',
-                ]);
-
-                // Guardar HBL References si vienen en el request
-                if ($request->filled('hbl_references')) {
-                    foreach ($request->hbl_references as $ref) {
-                        if (!empty($ref)) {
-                            HblReferences::create([
-                                'fk_hbl' => $subproject->hbl,
-                                'description' => $ref,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                    }
+                    'created_by' => $username,
+                    'created_date' => now(),
+                ], array_filter($request->hbl_references));
+                if (!empty($hblRefs)) {
+                    DB::table('cfs_hbl_references')->insert($hblRefs);
                 }
-
-                // Guardar Part Numbers si vienen en el request
-                if ($request->filled('part_numbers')) {
-                    foreach ($request->part_numbers as $pn) {
-                        if (!empty($pn)) {
-                            Partnumber::create([
-                                'fk_hbl' => $subproject->hbl,
-                                'fk_pn' => $pn,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                    }
-                }
-
-                // Obtener todos los proyectos con sus relaciones necesarias en una sola consulta
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                    ->where('status', '1')
-                    ->with([
-                        'masters' => function ($q) {
-                            $q->where('status', '1')
-                            ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                            ->with([
-                                'subprojects' => function ($q) {
-                                    $q->where('status', '1')
-                                        ->with([
-                                            'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                            'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                            'costumer:pk_customer,description',
-                                            'pns:pk_part_number,description',
-                                            'hblreferences:pk_hbl_reference,description,fk_hbl',
-                                        ]);
-                                }
-                            ]);
-                        },
-                        'drayageUserRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'drayageFileRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'invoiceRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                    ])
-                ->get();
-
-                // Extraer subprojects filtrados directamente de projects
-                $subprojects = $projects
-                    ->filter(fn($project) => $project->project_id === $projectId) // filtrar solo el proyecto deseado
-                    ->flatMap(fn($project) =>
-                        $project->masters
-                            ->filter(fn($master) => $master->mbl === $masterId && $master->fk_project_id === $projectId) // filtrar masters
-                            ->flatMap(fn($master) => $master->subprojects)
-                    )->values();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully added.',
-                    'subprojects' => $subprojects,
-                    'projects' => $projects,
-                    'pkproject' => $projectId,
-                ]);
-            }
-            else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Mastar or project not found.']);
             }
 
+            // Actualizar Part Numbers en batch
+            DB::table('cfs_h_pn')->where('fk_hbl', $originalHBL)->delete();
+            if ($request->filled('part_numbers')) {
+                $pns = array_map(fn($pn) => [
+                    'fk_hbl' => $newHBL,
+                    'fk_pn' => $pn,
+                    'status' => '1',
+                    'created_by' => $username,
+                    'created_date' => now(),
+                ], array_filter($request->part_numbers));
+                if (!empty($pns)) {
+                    DB::table('cfs_h_pn')->insert($pns);
+                }
+            }
+
+            // Recalcular totales del Master
+            $master->recalculateTotals();
+
+            // Obtener proyectos actualizados
+            $result = $this->repo->getProjectsWithSubprojects($projectId, $masterId);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Subproject successfully updated.',
+                'subprojects' => $result['selectedSubprojects'],
+                'projects' => $result['projects'],
+                'pkproject' => $projectId,
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating subproject: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
-        return redirect('/login');
     }
 
-    //Funcion para borrar el subproject
-    /*public function deleteSubproject(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl y el hbl estén presentes
-            $request->validate([
-                'mbl' => 'required|string',
-                'hbl' => 'required|string',
-                'project' => 'required|string',
-            ]);
-
-            $subproject = Subproject::where('hbl', $request->hbl)
-                ->where('fk_mbl', $request->mbl)
-                ->first();
-
-            if ($subproject) {
-                // Actualizar el estado del master a 0
-                $subproject->status = 0;
-                $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $subproject->transaction_date = now();
-                $subproject->save();
-
-                // Desactivar Part Numbers asociados (status = 0)
-                DB::table('cfs_h_pn')
-                ->where('fk_hbl', $subproject->hbl)
-                ->update(['status' => 0]);
-
-                // Eliminar HBL References asociados
-                $subproject->hblreferences()->delete();
-
-                // Obtener los subprojects relacionados al mbl
-                $subprojects = Subproject::where('fk_mbl', $request->mbl)
-                ->where('status', '1')
-                ->with([
-                    'costumer' => function ($q) {
-                        $q->where('status', '1');
-                    },
-                    'pns' => function ($q) {
-                        $q->where('cfs_pn.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'services' => function ($q) {
-                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'hblreferences' => function ($q) { // <- añade esta parte
-                        $q->where('cfs_hbl_references.status', '1');
-                    },
-                    'cfscommentRelation',
-                    'customreleaseRelation',
-                ])
-                ->get();
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->project)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subproject successfully deleted.',
-                    'subprojects' => $subprojects,
-                    'masters' => $masters,
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Subproject not found.']);
-            }
-        }
-        return redirect('/login');
-    }*/
-
-    //Funcion para borrar el subproject mas rapida
-    public function deleteSubproject(Request $request){
-        if (Auth::check()) {
-            // Validar que el mbl y el hbl estén presentes
-            $request->validate([
-                'mbl' => 'required|string',
-                'hbl' => 'required|string',
-                'project' => 'required|string',
-            ]);
-
-            $projectId = $request->input('project'); // asignar el project id recibido
-            $masterId = $request->input('mbl'); // asignar el mbl recibido
-
-            $subproject = Subproject::where('hbl', $request->hbl)
-                ->where('fk_mbl', $request->mbl)
-                ->first();
-
-            if ($subproject) {
-                // Actualizar el estado del master a 0
-                $subproject->status = 0;
-                $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                $subproject->transaction_date = now();
-                $subproject->save();
-
-                if ($subproject->fk_mbl) {
-                    $master = Master::where('mbl', $subproject->fk_mbl)->first();
-                    if ($master) {
-                        $master->recalculateTotals();
-                    }
-                }
-
-                // Desactivar Part Numbers asociados (status = 0)
-                DB::table('cfs_h_pn')
-                ->where('fk_hbl', $subproject->hbl)
-                ->update(['status' => 0]);
-
-                // Eliminar HBL References asociados
-                $subproject->hblreferences()->delete();
-
-                // Obtener todos los proyectos con sus relaciones necesarias en una sola consulta
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                    ->where('status', '1')
-                    ->with([
-                        'masters' => function ($q) {
-                            $q->where('status', '1')
-                            ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                            ->with([
-                                'subprojects' => function ($q) {
-                                    $q->where('status', '1')
-                                        ->with([
-                                            'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                            'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                            'costumer:pk_customer,description',
-                                            'pns:pk_part_number,description',
-                                            'hblreferences:pk_hbl_reference,description,fk_hbl',
-                                        ]);
-                                }
-                            ]);
-                        },
-                        'drayageUserRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'drayageFileRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'invoiceRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                    ])
-                ->get();
-
-                // Extraer subprojects filtrados directamente de projects
-                $subprojects = $projects
-                    ->filter(fn($project) => $project->project_id === $projectId) // filtrar solo el proyecto deseado
-                    ->flatMap(fn($project) =>
-                        $project->masters
-                            ->filter(fn($master) => $master->mbl === $masterId && $master->fk_project_id === $projectId) // filtrar masters
-                            ->flatMap(fn($master) => $master->subprojects)
-                    )->values();
-
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subproject successfully deleted.',
-                    'subprojects' => $subprojects,
-                    'projects' => $projects,
-                ]);
-            } else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Subproject not found.']);
-            }
-        }
-        return redirect('/login');
-    }
-
-    //Funcion añadir editar subproject
-    /*public function editNewSubproject(Request $request){
-        if(Auth::check()) {
-            $originalId = $request->input('inputnewsubprojectcfshbloriginal');
-            
-            $validated = $request->validate([
-                'inputnewsubprojectproyectid' => 'required',
-                'inputnewsubprojectcfsmbl' => 'required',
-                'inputnewsubprojectcfssubprojectid' => 'required',
-                //'inputnewsubprojectcfshbl' => 'required',
-                'inputnewsubprojectcfshbl' => [
-                    'required',
-                    Rule::unique('cfs_subprojects', 'hbl')->ignore($originalId, 'hbl')
-                ],
-                // Validación de los nuevos arreglos (hbl_references y part_numbers)
-                'hbl_references' => 'nullable|array',
-                'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
-
-                'part_numbers' => 'nullable|array',
-                'part_numbers.*' => 'nullable|string|required_without:part_numbers', // Si hay algún valor, no debe ser vacío
-
-                'inputnewsubprojectcfspieces' => 'required|numeric|min:0',
-                'inputnewsubprojectcfsworkspalletized' => 'required',
-                'inputnewsubprojectcfspalletsexchanged' => 'required',
-                'inputnewsubprojectcfspallets' => 'required|numeric|min:0',
-                'inputnewsubprojectcfspalletizedcharges' => 'required',
-                'inputnewsubprojectcfscustomer' => 'required',
-                'checkAgent' => 'nullable',
-                'checkCollected' => 'nullable',
-                'inputnewsubprojectcfscfscomment' => 'required',
-                'inputnewsubprojectcfsarrivaldate' => 'required|date',
-                'inputnewsubprojectcfsmagayawhr' => 'nullable',
-                'inputnewsubprojectcfslfd' => 'required|date',
-                'inputnewsubprojectcfscustomsreleasecomment' => 'required',
-                'inputnewsubprojectcfsoutdatecr' => 'nullable',
-                'inputnewsubprojectcfsmagayacr' => 'nullable',
-                'inputnewsubprojectcfsdalfd' => 'required|numeric|min:0',
-                'inputnewsubprojectcfscuft' => 'nullable',
-                'inputnewsubprojectcfswhstoragecharges' => 'required',
-                'inputnewsubprojectcfsdeliverycharges' => 'nullable',
-                'inputnewsubprojectcfscharges' => 'required',
-                'inputnewsubprojectcfsnotes' => 'nullable',
-            ],[
-                'inputnewsubprojectproyectid.required' => 'Project ID is required.',
-                'inputnewsubprojectcfsmbl.required' => 'MBL is required.',
-                'inputnewsubprojectcfssubprojectid.required' => 'Subproject ID is required.',
-                'inputnewsubprojectcfshbl.unique' => 'HBL already exists.',
-                'inputnewsubprojectcfshbl.required' => 'HBL is required.',
-                'inputnewsubprojectcfspieces.required' => 'Pieces is required.',
-                'inputnewsubprojectcfspieces.numeric' => 'Pieces must be a number.',
-                'inputnewsubprojectcfspieces.min' => 'Pieces must be at least 0.',
-                'inputnewsubprojectcfsworkspalletized.required' => 'Works/Palletized is required.',
-                'inputnewsubprojectcfspalletsexchanged.required' => 'Pallets Exchanged is required.',
-                'inputnewsubprojectcfspallets.required' => 'Pallets is required.',
-                'inputnewsubprojectcfspallets.numeric' => 'Pallets must be a number.',
-                'inputnewsubprojectcfspallets.min' => 'Pallets must be at least 0.',
-                'inputnewsubprojectcfspalletizedcharges.required' => 'Palletized Charge is required.',
-                'inputnewsubprojectcfscustomer.required' => 'Customer is required.',
-                'inputnewsubprojectcfscfscomment.required' => 'CFS is required.',
-                'inputnewsubprojectcfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewsubprojectcfsarrivaldate.date' => 'Arrival must be a date.',
-                'inputnewsubprojectcfslfd.required' => 'LFD is required.',
-                'inputnewsubprojectcfslfd.date' => 'LFD must be a date.',
-                'inputnewsubprojectcfscustomsreleasecomment.required' => 'Custom release is required.',
-                'inputnewsubprojectcfsdalfd.required' => 'Days after LFD is required.',
-                'inputnewsubprojectcfsdalfd.numeric' => 'Days after LFD must be a number.',
-                'inputnewsubprojectcfsdalfd.min' => 'Days after LFD must be at least 0.',
-                'inputnewsubprojectcfswhstoragecharges.required' => 'WH Storahe Charge is required.',
-                'inputnewsubprojectcfscharges.required' => 'Charges is required.',
-
-                'hbl_references.array' => 'HBL references must be an array.',
-                'hbl_references.*.string' => 'Each HBL reference must be a string.',
-                'hbl_references.*.required_without' => 'Each HBL reference must not be empty if provided.',
-
-                'part_numbers.array' => 'Part numbers must be an array.',
-                'part_numbers.*.string' => 'Each Part Number must be a string.',
-                'part_numbers.*.required_without' => 'Each Part Number must not be empty if provided.',
-            ]);
-
-            $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
-            $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
-
-            $outdate = $request->inputnewsubprojectcfsoutdatecr ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s') : null;
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
-
-
-            $projectId = $request->input('inputnewsubprojectproyectid');
-            $masterId = $request->input('inputnewsubprojectcfsmbl');
-
-            $master = Master::where('mbl', $masterId)
-                ->where('fk_project_id', $projectId)
-                ->first();
-
-            if ($master) {
-                // Actualizar el subproject
-
-                // Obtener el proyecto por el ID
-                $subproject = Subproject::find($originalId);
-
-                if($subproject){
-                    // Guardamos el HBL original antes del cambio
-                    $oldHBL = $subproject->hbl;
-                    $newHBL = $request->inputnewsubprojectcfshbl;
-
-                    $subproject->hbl = $newHBL;
-                    //$subproject->fk_mbl = $request->inputnewsubprojectcfsmbl;
-                    $subproject->subprojects_id = $request->inputnewsubprojectcfssubprojectid;
-                    $subproject->pieces = $request->inputnewsubprojectcfspieces;
-                    $subproject->works_palletized = $request->inputnewsubprojectcfsworkspalletized;
-                    $subproject->pallets_exchanged = $request->inputnewsubprojectcfspalletsexchanged;
-                    $subproject->pallets = $request->inputnewsubprojectcfspallets;
-                    $subproject->services_charge = $request->inputnewsubprojectcfspalletizedcharges;
-                    $subproject->customer = $request->inputnewsubprojectcfscustomer;
-                    $subproject->agent = $checkAgent;
-                    $subproject->collected = $checkCollected;
-                    $subproject->cfs_comment = $request->inputnewsubprojectcfscfscomment;
-                    $subproject->arrival_date = $arrivaldate;
-                    $subproject->whr = $request->inputnewsubprojectcfsmagayawhr;
-                    $subproject->lfd = $lfd;
-                    $subproject->customs_release_comment = $request->inputnewsubprojectcfscustomsreleasecomment;
-                    $subproject->out_date_cr = $outdate;
-                    $subproject->cr = $request->inputnewsubprojectcfsmagayacr;
-                    $subproject->days_after_lfd = $request->inputnewsubprojectcfsdalfd;
-                    $subproject->cuft = $request->inputnewsubprojectcfscuft;
-                    $subproject->wh_storage_charge = $request->inputnewsubprojectcfswhstoragecharges;
-                    $subproject->delivery_charges = $request->inputnewsubprojectcfsdeliverycharges;
-                    $subproject->charges = $request->inputnewsubprojectcfscharges;
-                    $subproject->notes = $request->inputnewsubprojectcfsnotes;
-                    $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                    $subproject->transaction_date = now();
-                    $subproject->save();
-
-                    // Si el hbl cambió, actualizamos los part numbers y hbl references relacionados
-                    if ($oldHBL !== $newHBL) {
-                        DB::table('cfs_hbl_references')
-                            ->where('status', 1) // condición adicional
-                            ->where('fk_hbl', $oldHBL)
-                            ->update(['fk_hbl' => $newHBL]);
-
-                        DB::table('cfs_h_pn')
-                            ->where('status', 1) // condición adicional
-                            ->where('fk_hbl', $oldHBL)
-                            ->update(['fk_hbl' => $newHBL]);
-                    }
-                }
-                // Obtener el subproyecto recién creado
-                $subprojectId = $subproject->hbl;
-
-                if ($request->has('hbl_references') && is_array($request->hbl_references)) {
-                    $references = array_filter($request->hbl_references, fn($ref) => !empty($ref));
-                    $existingDescriptions = [];
-                
-                    foreach ($references as $ref) {
-                        $exists = HblReferences::where('fk_hbl', $subprojectId)
-                            ->where('description', $ref)
-                            ->where('status', 1) // condición adicional
-                            ->exists();
-                
-                        if (!$exists) {
-                            HblReferences::create([
-                                'fk_hbl' => $subprojectId,
-                                'description' => $ref,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                
-                        $existingDescriptions[] = $ref;
-                    }
-                
-                    // Eliminar referencias que ya no están en el array enviado
-                    HblReferences::where('fk_hbl', $subprojectId)
-                        ->where('status', 1) // condición adicional
-                        ->whereNotIn('description', $existingDescriptions)
-                        ->delete();
-                } else {
-                    HblReferences::where('fk_hbl', $subprojectId)->delete();
-                }
-
-                // Actualizar part_numbers
-                if ($request->has('part_numbers') && is_array($request->part_numbers)) {
-                    DB::table('cfs_h_pn')->where('fk_hbl', $newHBL)->delete();
-                    foreach ($request->part_numbers as $pn) {
-                        if (!empty($pn)) {
-                            DB::table('cfs_h_pn')->insert([
-                                'fk_hbl' => $newHBL,
-                                'fk_pn' => $pn,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now()
-                            ]);
-                        }
-                    }
-                } else {
-                    Partnumber::where('fk_hbl', $subprojectId)->delete();
-                }
-                //if ($request->has('part_numbers') && is_array($request->part_numbers)) {
-                //    $partNumbers = array_filter($request->part_numbers, fn($pn) => !empty($pn));
-                //    $existingPartNumbers = [];
-                //
-                //    foreach ($partNumbers as $pn) {
-                //        $exists = Partnumber::where('fk_hbl', $subprojectId)
-                //            ->where('fk_pn', $pn)
-                //            ->exists();
-                //
-                //        if (!$exists) {
-                //            Partnumber::create([
-                //                'fk_hbl' => $subprojectId,
-                //                'fk_pn' => $pn,
-                //                'status' => '1',
-                //                'created_by' => Auth::user()->username ?? 'system',
-                //                'created_date' => now(),
-                //            ]);
-                //        }
-                //
-                //        $existingPartNumbers[] = $pn;
-                //    }
-                //
-                //    // Eliminar PNs que ya no están en el array enviado
-                //    Partnumber::where('fk_hbl', $subprojectId)
-                //        ->whereNotIn('fk_pn', $existingPartNumbers)
-                //        ->delete();
-                //} else {
-                //    Partnumber::where('fk_hbl', $subprojectId)->delete();
-                //}
-
-                // Obtener los subprojects relacionados al mbl
-                $subprojects = Subproject::where('fk_mbl', $request->inputnewsubprojectcfsmbl)
-                ->where('status', '1')
-                ->with([
-                    'costumer' => function ($q) {
-                        $q->where('status', '1');
-                    },
-                    'pns' => function ($q) {
-                        $q->where('cfs_pn.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'services' => function ($q) {
-                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                    },
-                    'hblreferences' => function ($q) { // <- añade esta parte
-                        $q->where('cfs_hbl_references.status', '1');
-                    },
-                    'cfscommentRelation',
-                    'customreleaseRelation',
-                ])
-                ->get();
-
-                // Obtener los masters con relaciones anidadas actualizadas
-                $masters = Master::where('fk_project_id', $request->inputnewsubprojectproyectid)
-                ->where('status', '1')
-                ->with([
-                    'subprojects' => function ($q) {
-                        $q->where('status', '1')
-                        ->with([
-                            'costumer' => function ($q) {
-                                $q->where('cfs_customer.status', '1');
-                            },
-                            'pns' => function ($q) {
-                                $q->where('cfs_pn.status', '1'); // evitar ambigüedad
-                            },
-                            'services' => function ($q) {
-                                $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                            },
-                            'hblreferences' => function ($q) { // <- añade esta parte
-                                $q->where('cfs_hbl_references.status', '1');
-                            },
-                            'cfscommentRelation',
-                            'customreleaseRelation',
-                        ]);
-                    }
-                ])
-                ->get();
-
-                // Obtener todos los proyectos con sus relaciones necesarias
-                $projects = Project::with([
-                    'masters' => function ($q) {
-                        $q->where('status', '1')->with([
-                            'subprojects' => function ($q) {
-                                $q->where('status', '1')->with([
-                                    'costumer' => function ($q) {
-                                        $q->where('cfs_customer.status', '1');
-                                    },
-                                    'pns' => function ($q) { // <- Aquí es la clave
-                                        $q->where('cfs_pn.status', '1');
-                                    },
-                                    'services' => function ($q) {
-                                        $q->where('cfs_services.status', '1'); // Filtrar partnumbers con status 1
-                                    },
-                                    'hblreferences' => function ($q) { // <- añade esta parte
-                                        $q->where('cfs_hbl_references.status', '1');
-                                    },
-                                    'cfscommentRelation',
-                                    'customreleaseRelation',
-                                ]);
-                            }
-                        ]);
-                    },
-                    'drayageUserRelation',
-                    'drayageFileRelation',
-                    'invoiceRelation',
-                ])
-                ->where('status', '1')
-                ->get();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully added.',
-                    'subprojects' => $subprojects,
-                    'masters' => $masters,
-                    'projects' => $projects,
-                ]);
-            }
-            else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
-            }
-
-        }
-        return redirect('/login');
-    }*/
-
-    //Funcion añadir editar subproject mas rapida
-    public function editNewSubproject(Request $request){
-        if(Auth::check()) {
-            $originalId = $request->input('inputnewsubprojectcfshbloriginal');
-            
-            $validated = $request->validate([
-                'inputnewsubprojectproyectid' => 'required',
-                'inputnewsubprojectcfsmbl' => 'required',
-                'inputnewsubprojectcfssubprojectid' => 'required',
-                //'inputnewsubprojectcfshbl' => 'required',
-                'inputnewsubprojectcfshbl' => [
-                    'required',
-                    Rule::unique('cfs_subprojects', 'hbl')->ignore($originalId, 'hbl')
-                ],
-                // Validación de los nuevos arreglos (hbl_references y part_numbers)
-                'hbl_references' => 'nullable|array',
-                'hbl_references.*' => 'nullable|string|required_without:hbl_references', // Si hay algún valor, no debe ser vacío
-
-                'part_numbers' => 'nullable|array',
-                'part_numbers.*' => 'nullable|string|required_without:part_numbers', // Si hay algún valor, no debe ser vacío
-
-                'inputnewsubprojectcfspieces' => 'required|numeric|min:0',
-                'inputnewsubprojectcfsworkspalletized' => 'required',
-                'inputnewsubprojectcfspalletsexchanged' => 'required',
-                'inputnewsubprojectcfspallets' => 'required|numeric|min:0',
-                'inputnewsubprojectcfspalletizedcharges' => 'required',
-                'inputnewsubprojectcfscustomer' => 'required',
-                'checkAgent' => 'nullable',
-                'checkCollected' => 'nullable',
-                'inputnewsubprojectcfscfscomment' => 'required',
-                'inputnewsubprojectcfsarrivaldate' => 'required|date',
-                'inputnewsubprojectcfsmagayawhr' => 'nullable',
-                'inputnewsubprojectcfslfd' => 'required|date',
-                'inputnewsubprojectcfscustomsreleasecomment' => 'required',
-                'inputnewsubprojectcfsoutdatecr' => 'nullable',
-                'inputnewsubprojectcfsmagayacr' => 'nullable',
-                'inputnewsubprojectcfsdalfd' => 'required|numeric|min:0',
-                'inputnewsubprojectcfscuft' => 'nullable',
-                'inputnewsubprojectcfswhstoragecharges' => 'required',
-                'inputnewsubprojectcfsdeliverycharges' => 'nullable',
-                'inputnewsubprojectcfscharges' => 'required',
-                'inputnewsubprojectcfsnotes' => 'nullable',
-            ],[
-                'inputnewsubprojectproyectid.required' => 'Project ID is required.',
-                'inputnewsubprojectcfsmbl.required' => 'MBL is required.',
-                'inputnewsubprojectcfssubprojectid.required' => 'Subproject ID is required.',
-                'inputnewsubprojectcfshbl.unique' => 'HBL already exists.',
-                'inputnewsubprojectcfshbl.required' => 'HBL is required.',
-                'inputnewsubprojectcfspieces.required' => 'Pieces is required.',
-                'inputnewsubprojectcfspieces.numeric' => 'Pieces must be a number.',
-                'inputnewsubprojectcfspieces.min' => 'Pieces must be at least 0.',
-                'inputnewsubprojectcfsworkspalletized.required' => 'Works/Palletized is required.',
-                'inputnewsubprojectcfspalletsexchanged.required' => 'Pallets Exchanged is required.',
-                'inputnewsubprojectcfspallets.required' => 'Pallets is required.',
-                'inputnewsubprojectcfspallets.numeric' => 'Pallets must be a number.',
-                'inputnewsubprojectcfspallets.min' => 'Pallets must be at least 0.',
-                'inputnewsubprojectcfspalletizedcharges.required' => 'Palletized Charge is required.',
-                'inputnewsubprojectcfscustomer.required' => 'Customer is required.',
-                'inputnewsubprojectcfscfscomment.required' => 'CFS is required.',
-                'inputnewsubprojectcfsarrivaldate.required' => 'Arrival Date is required.',
-                'inputnewsubprojectcfsarrivaldate.date' => 'Arrival must be a date.',
-                'inputnewsubprojectcfslfd.required' => 'LFD is required.',
-                'inputnewsubprojectcfslfd.date' => 'LFD must be a date.',
-                'inputnewsubprojectcfscustomsreleasecomment.required' => 'Custom release is required.',
-                'inputnewsubprojectcfsdalfd.required' => 'Days after LFD is required.',
-                'inputnewsubprojectcfsdalfd.numeric' => 'Days after LFD must be a number.',
-                'inputnewsubprojectcfsdalfd.min' => 'Days after LFD must be at least 0.',
-                'inputnewsubprojectcfswhstoragecharges.required' => 'WH Storahe Charge is required.',
-                'inputnewsubprojectcfscharges.required' => 'Charges is required.',
-
-                'hbl_references.array' => 'HBL references must be an array.',
-                'hbl_references.*.string' => 'Each HBL reference must be a string.',
-                'hbl_references.*.required_without' => 'Each HBL reference must not be empty if provided.',
-
-                'part_numbers.array' => 'Part numbers must be an array.',
-                'part_numbers.*.string' => 'Each Part Number must be a string.',
-                'part_numbers.*.required_without' => 'Each Part Number must not be empty if provided.',
-            ]);
-
-            $checkAgent = $request->has('checkAgent') ? 'Yes' : 'No';
-            $checkCollected = $request->has('checkCollected') ? 'Yes' : 'No';
-
-            $outdate = $request->inputnewsubprojectcfsoutdatecr ? Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsoutdatecr)->format('Y-m-d H:i:s') : null;
-            $arrivaldate = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfsarrivaldate)->format('Y-m-d H:i:s');
-            $lfd = Carbon::createFromFormat('m/d/Y H:i:s', $request->inputnewsubprojectcfslfd)->format('Y-m-d H:i:s');
-
-
-            $projectId = $request->input('inputnewsubprojectproyectid');
-            $masterId = $request->input('inputnewsubprojectcfsmbl');
-
-            $master = Master::where('mbl', $request->inputnewsubprojectcfsmbl)
-            ->where('fk_project_id', $request->inputnewsubprojectproyectid)
-            ->exists();
-
-            if ($master) {
-                // Actualizar el subproject
-
-                // Obtener el proyecto por el ID
-                $subproject = Subproject::find($originalId);
-
-                if($subproject){
-                    // Guardamos el HBL original antes del cambio
-                    $oldHBL = $subproject->hbl;
-                    $newHBL = $request->inputnewsubprojectcfshbl;
-
-                    $subproject->hbl = $newHBL;
-                    //$subproject->fk_mbl = $request->inputnewsubprojectcfsmbl;
-                    $subproject->subprojects_id = $request->inputnewsubprojectcfssubprojectid;
-                    $subproject->pieces = $request->inputnewsubprojectcfspieces;
-                    $subproject->works_palletized = $request->inputnewsubprojectcfsworkspalletized;
-                    $subproject->pallets_exchanged = $request->inputnewsubprojectcfspalletsexchanged;
-                    $subproject->pallets = $request->inputnewsubprojectcfspallets;
-                    $subproject->services_charge = $request->inputnewsubprojectcfspalletizedcharges;
-                    $subproject->customer = $request->inputnewsubprojectcfscustomer;
-                    $subproject->agent = $checkAgent;
-                    $subproject->collected = $checkCollected;
-                    $subproject->cfs_comment = $request->inputnewsubprojectcfscfscomment;
-                    $subproject->arrival_date = $arrivaldate;
-                    $subproject->whr = $request->inputnewsubprojectcfsmagayawhr;
-                    $subproject->lfd = $lfd;
-                    $subproject->customs_release_comment = $request->inputnewsubprojectcfscustomsreleasecomment;
-                    $subproject->out_date_cr = $outdate;
-                    $subproject->cr = $request->inputnewsubprojectcfsmagayacr;
-                    $subproject->days_after_lfd = $request->inputnewsubprojectcfsdalfd;
-                    $subproject->cuft = $request->inputnewsubprojectcfscuft;
-                    $subproject->wh_storage_charge = $request->inputnewsubprojectcfswhstoragecharges;
-                    $subproject->delivery_charges = $request->inputnewsubprojectcfsdeliverycharges;
-                    $subproject->charges = $request->inputnewsubprojectcfscharges;
-                    $subproject->notes = $request->inputnewsubprojectcfsnotes;
-                    $subproject->updated_by = Auth::check() ? Auth::user()->username : 'system';
-                    $subproject->transaction_date = now();
-                    $subproject->save();
-
-                    // Si el hbl cambió, actualizamos los part numbers y hbl references relacionados
-                    if ($oldHBL !== $newHBL) {
-                        DB::table('cfs_hbl_references')
-                            ->where('status', 1) // condición adicional
-                            ->where('fk_hbl', $oldHBL)
-                            ->update(['fk_hbl' => $newHBL]);
-
-                        DB::table('cfs_h_pn')
-                            ->where('status', 1) // condición adicional
-                            ->where('fk_hbl', $oldHBL)
-                            ->update(['fk_hbl' => $newHBL]);
-                    }
-                }
-                // Obtener el subproyecto recién creado
-                $subprojectId = $subproject->hbl;
-
-                if ($request->has('hbl_references') && is_array($request->hbl_references)) {
-                    $references = array_filter($request->hbl_references, fn($ref) => !empty($ref));
-                    $existingDescriptions = [];
-                
-                    foreach ($references as $ref) {
-                        $exists = HblReferences::where('fk_hbl', $subprojectId)
-                            ->where('description', $ref)
-                            ->where('status', 1) // condición adicional
-                            ->exists();
-                
-                        if (!$exists) {
-                            HblReferences::create([
-                                'fk_hbl' => $subprojectId,
-                                'description' => $ref,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now(),
-                            ]);
-                        }
-                
-                        $existingDescriptions[] = $ref;
-                    }
-                
-                    // Eliminar referencias que ya no están en el array enviado
-                    HblReferences::where('fk_hbl', $subprojectId)
-                        ->where('status', 1) // condición adicional
-                        ->whereNotIn('description', $existingDescriptions)
-                        ->delete();
-                } else {
-                    HblReferences::where('fk_hbl', $subprojectId)->delete();
-                }
-
-                // Actualizar part_numbers
-                if ($request->has('part_numbers') && is_array($request->part_numbers)) {
-                    DB::table('cfs_h_pn')->where('fk_hbl', $newHBL)->delete();
-                    foreach ($request->part_numbers as $pn) {
-                        if (!empty($pn)) {
-                            DB::table('cfs_h_pn')->insert([
-                                'fk_hbl' => $newHBL,
-                                'fk_pn' => $pn,
-                                'status' => '1',
-                                'created_by' => Auth::user()->username ?? 'system',
-                                'created_date' => now()
-                            ]);
-                        }
-                    }
-                } else {
-                    Partnumber::where('fk_hbl', $subprojectId)->delete();
-                }
-                
-                // Obtener todos los proyectos con sus relaciones necesarias en una sola consulta
-                $projects = Project::select('project_id', 'month', 'invoice', 'drayage_user', 'drayage_typefile')
-                    ->where('status', '1')
-                    ->with([
-                        'masters' => function ($q) {
-                            $q->where('status', '1')
-                            ->select('mbl', 'fk_project_id', 'container_number', 'total_pieces', 'total_pallets', 'eta_port', 'arrival_date', 'lfd')
-                            ->with([
-                                'subprojects' => function ($q) {
-                                    $q->where('status', '1')
-                                        ->with([
-                                            'cfscommentRelation:gnct_id,gntc_value,gntc_description',
-                                            'customreleaseRelation:gnct_id,gntc_value,gntc_description',
-                                            'costumer:pk_customer,description',
-                                            'pns:pk_part_number,description',
-                                            'hblreferences:pk_hbl_reference,description,fk_hbl',
-                                        ]);
-                                }
-                            ]);
-                        },
-                        'drayageUserRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'drayageFileRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                        'invoiceRelation' => function ($q) {
-                            $q->select('gnct_id', 'gntc_value', 'gntc_description')->where('gntc_status', '1');
-                        },
-                    ])
-                ->get();
-
-                // Extraer subprojects filtrados directamente de projects
-                $subprojects = $projects
-                    ->filter(fn($project) => $project->project_id === $projectId) // filtrar solo el proyecto deseado
-                    ->flatMap(fn($project) =>
-                        $project->masters
-                            ->filter(fn($master) => $master->mbl === $masterId && $master->fk_project_id === $projectId) // filtrar masters
-                            ->flatMap(fn($master) => $master->subprojects)
-                    )->values();
-
-                // Responder con éxito y los proyectos actualizados
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Subprojects successfully added.',
-                    'subprojects' => $subprojects,
-                    'projects' => $projects,
-                    'pkproject' => $projectId,
-                ]);
-            }
-            else {
-                // Si no se encuentra el master, responder con error
-                return response()->json(['success' => false, 'message' => 'Master not found.']);
-            }
-
-        }
-        return redirect('/login');
-    }
 }
